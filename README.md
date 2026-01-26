@@ -32,4 +32,14 @@ http://localhost:8000/health
 
 3)Run the Web app
 cd apps/web
-# TODO: add steps after web scaffold exists
+## Run locally
+```bash
+cd apps/web
+npm install
+npm run dev
+
+Web env (required):
+Create apps/web/.env.local with the following content:
+    NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+.env.local is gitignored. Do not commit it.
+
