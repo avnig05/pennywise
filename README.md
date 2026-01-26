@@ -43,3 +43,11 @@ Create apps/web/.env.local with the following content:
     NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
 .env.local is gitignored. Do not commit it.
 
+```md
+API env (required for Supabase-backed endpoints like `/me`):
+Create `apps/api/.env` (gitignored) with:
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `DEV_USER_ID` (UUID from Supabase Auth Users)
+
