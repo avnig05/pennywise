@@ -51,3 +51,26 @@ Create `apps/api/.env` (gitignored) with:
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `DEV_USER_ID` (UUID from Supabase Auth Users)
 
+### API quick test (PowerShell)
+
+Health:
+```powershell
+Invoke-RestMethod -Method Get -Uri "http://localhost:8000/health"
+
+1st method: Get profile
+Invoke-RestMethod -Method Get -Uri "http://localhost:8000/me"
+
+2nd method: Update profile
+Invoke-RestMethod -Method Put -Uri "http://localhost:8000/me" `
+  -ContentType "application/json" `
+  -Body '{"job_type":"w2","state":"CA","pay_frequency":"biweekly","net_income_range":"1500_2500","rent_status":"rent","debt_status":"none","credit_card_status":"use_sometimes","emergency_buffer_range":"lt_500","priority":"save"}'
+
+### How user data is stored (dev mode)
+
+For now, we store Supabase connection credentials in `apps/api/.env` (gitignored).  
+The backend uses `DEV_USER_ID` to simulate an authenticated user.
+
+When the frontend (or a test client) sends a `PUT /me` request, the API updates the profile for that user into the `profiles` table in Supabase.  
+You can then confirm it was saved by calling `GET /me`.
+
+> Note: `DEV_USER_ID` is temporary. It will be replaced by real authentication (Supabase Auth), where each user has their own `user_id`.
