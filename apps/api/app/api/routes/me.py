@@ -27,11 +27,16 @@ def _user_id() -> str:
 @router.get("/me")
 def get_me():
     user_id = _user_id()
-    resp = supabase.table("profiles").select("*").eq("user_id", user_id).execute()
-    rows = resp.data or []
-    if not rows:
-        raise HTTPException(status_code=404, detail="Profile not found. Complete onboarding.")
-    return rows[0]
+    try:
+        resp = supabase.table("profiles").select("*").eq("user_id", user_id).execute()
+        rows = resp.data or []
+        if not rows:
+            raise HTTPException(status_code=404, detail="Profile not found. Complete onboarding.")
+        return rows[0]
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read profile: {e}")
 
 @router.put("/me")
 def put_me(update: ProfileUpdate):

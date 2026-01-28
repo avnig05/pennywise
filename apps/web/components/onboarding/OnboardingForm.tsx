@@ -347,7 +347,7 @@ export default function OnboardingForm() {
         setValidationError(null);
         const ok = await persist();
         if (ok) {
-          router.push("/");
+          router.push("/dashboard");
         }
       }}
     >
