@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StepIndicator from "./StepIndicator";
+import { StateCombobox } from "./StateCombobox";
 import type {
   AgeRange,
   CreditCardStatus,
@@ -98,59 +99,6 @@ const INTEREST_OPTIONS = [
   "Side income",
 ];
 
-const US_STATES = [
-  "AL",
-  "AK",
-  "AZ",
-  "AR",
-  "CA",
-  "CO",
-  "CT",
-  "DE",
-  "DC",
-  "FL",
-  "GA",
-  "HI",
-  "ID",
-  "IL",
-  "IN",
-  "IA",
-  "KS",
-  "KY",
-  "LA",
-  "ME",
-  "MD",
-  "MA",
-  "MI",
-  "MN",
-  "MS",
-  "MO",
-  "MT",
-  "NE",
-  "NV",
-  "NH",
-  "NJ",
-  "NM",
-  "NY",
-  "NC",
-  "ND",
-  "OH",
-  "OK",
-  "OR",
-  "PA",
-  "RI",
-  "SC",
-  "SD",
-  "TN",
-  "TX",
-  "UT",
-  "VT",
-  "VA",
-  "WA",
-  "WV",
-  "WI",
-  "WY",
-];
 
 export default function OnboardingForm() {
   const router = useRouter();
@@ -202,20 +150,12 @@ export default function OnboardingForm() {
         id: "state",
         title: "Which state do you live in?",
         body: (
-          <select
-            className="mt-4 w-full rounded-md border px-3 py-2 text-sm"
-            value={formState.state ?? ""}
-            onChange={(event) =>
-              setFormState((prev) => ({ ...prev, state: event.target.value || null }))
+          <StateCombobox
+            value={formState.state ?? null}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, state: value }))
             }
-          >
-            <option value="">Select a state</option>
-            {US_STATES.map((abbr) => (
-              <option key={abbr} value={abbr}>
-                {abbr}
-              </option>
-            ))}
-          </select>
+          />
         ),
       },
       {
@@ -424,7 +364,7 @@ export default function OnboardingForm() {
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
-          className="rounded-md border px-4 py-2 text-sm"
+          className="cursor-pointer rounded-md border px-4 py-2 text-sm"
           onClick={handleBack}
           disabled={stepIndex === 0}
         >
@@ -432,7 +372,7 @@ export default function OnboardingForm() {
         </button>
         <button
           type={isLastStep ? "submit" : "button"}
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-60"
+          className="cursor-pointer rounded-md bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-60"
           onClick={handleNext}
           disabled={isSaving}
         >
