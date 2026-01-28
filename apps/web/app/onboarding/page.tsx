@@ -1,8 +1,20 @@
-"use client";
-
+import { redirect } from "next/navigation";
 import OnboardingForm from "../../components/onboarding/OnboardingForm";
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+  
+  try {
+    const res = await fetch(`${apiBase}/me`, { cache: "no-store" });
+    
+    // If user already has a profile, redirect to dashboard
+    if (res.ok) {
+      redirect("/dashboard");
+    }
+  } catch {
+    // If API is down, allow access to onboarding
+  }
+
   return (
     <main className="min-h-screen p-8">
       <div className="mx-auto max-w-2xl">
