@@ -1,0 +1,5 @@
+# Paste article URLs here, one per line
+# Lines starting with # are ignored
+
+# Example URLs (replace with your own):
+https://www.consumerfinance.gov/ask-cfpb/what-is-a-credit-score-en-315/
