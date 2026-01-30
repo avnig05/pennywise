@@ -48,7 +48,7 @@ def create_summarizer_llm(temperature: float = 0.3) -> ChatGoogleGenerativeAI:
     api_key = require_env("GEMINI_API_KEY", GEMINI_API_KEY)
     
     return ChatGoogleGenerativeAI(
-        model="gemini-pro",
+        model="gemini-2.5-flash",
         google_api_key=api_key,
         temperature=temperature,
     )
