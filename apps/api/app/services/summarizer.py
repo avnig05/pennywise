@@ -11,17 +11,24 @@ from app.services.scraper import ScrapedArticle
 
 
 # Financial education-focused summarization prompt
-SUMMARY_PROMPT_TEMPLATE = """You are a financial education expert tasked with creating clear, concise summaries of financial articles for learners.
+SUMMARY_PROMPT_TEMPLATE = """You are writing for college students, new graduates, and working adults who want to understand financial topics clearly and efficiently.
 
-Your goal is to help people understand key financial concepts from credible sources. Create a summary that:
+Use plain, professional language that is easy to read but not oversimplified. 
+Avoid academic or legal-style phrasing.
 
-1. **Extracts the core financial concepts** - What are the main financial topics, strategies, or principles discussed?
-2. **Highlights actionable insights** - What can readers learn or apply from this content?
-3. **Maintains educational value** - Preserve important details, examples, and explanations that help understanding
-4. **Uses clear, accessible language** - Write for a general audience interested in financial literacy
-5. **Keeps it concise** - Aim for 3-5 paragraphs that capture the essence without losing critical information
+Formatting rules (must follow):
+- Write 4–6 short paragraphs.
+- Each paragraph should be 1–2 sentences.
+- Keep sentences concise and direct.
+- Avoid jargon when possible. If a financial term is necessary, briefly explain it in simple words.
+- Do not write long blocks of text.
 
-Focus on the educational content and avoid marketing language, disclaimers, or boilerplate text.
+Content rules:
+1) Clearly explain the main financial concept.
+2) Break down key factors or components in an intuitive way.
+3) Briefly explain why this information matters in real life.
+
+Avoid marketing language, disclaimers, and filler phrases.
 
 Article Title: {title}
 Source: {source_name}
@@ -31,7 +38,7 @@ Source: {source_name}
 Article Content:
 {content}
 
-Create a comprehensive yet concise summary suitable for financial education:"""
+Write a clear, skimmable summary that follows the rules exactly:"""
 
 
 def create_summarizer_llm(temperature: float = 0.3) -> ChatGoogleGenerativeAI:
