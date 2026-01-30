@@ -12,6 +12,7 @@ from app.core.supabase_client import supabase
 from app.services.scraper import scrape_article
 from app.services.summarizer import summarize_article
 from app.services.chunker import chunk_text
+from app.services.embedder import get_embedding
 
 router = APIRouter(prefix="/articles", tags=["articles"])
 
@@ -134,18 +135,26 @@ def ingest_article(request: ArticleIngestRequest):
         except Exception as e:
             print(f"Warning: Failed to save summary for article {article_id}: {e}")
     
-    # Step 6: Chunk the content and store chunks
+    # Step 6: Chunk the content, generate embeddings, and store chunks
     chunks_created = 0
     try:
         chunks = chunk_text(scraped.content)
-        chunk_rows = [
-            {
+        chunk_rows = []
+        
+        for idx, chunk_content in enumerate(chunks):
+            # Generate embedding for this chunk
+            try:
+                embedding = get_embedding(chunk_content)
+            except Exception as e:
+                print(f"Warning: Failed to generate embedding for chunk {idx}: {e}")
+                embedding = None
+            
+            chunk_rows.append({
                 "article_id": article_id,
                 "chunk_index": idx,
                 "content": chunk_content,
-            }
-            for idx, chunk_content in enumerate(chunks)
-        ]
+                "embedding": embedding,
+            })
         
         if chunk_rows:
             chunk_resp = supabase.table("article_chunks").insert(chunk_rows).execute()

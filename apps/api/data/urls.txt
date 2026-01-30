@@ -1,5 +1,28 @@
-# Paste article URLs here, one per line
+# Article URLs for ingestion
+# Format: url (simple) or url,category,difficulty (with metadata)
 # Lines starting with # are ignored
+#
+# Categories: budgeting, investing, credit_cards, building_credit, 
+#             student_loans, debt_management, taxes, savings
+# Difficulty: beginner, intermediate, advanced
 
-# Example URLs (replace with your own):
+# Example entries:
+# https://example.com/article-about-budgeting
+# https://example.com/credit-tips,credit_cards,beginner
+
+# Your URLs below:
+
+#Credit Score
 https://www.consumerfinance.gov/ask-cfpb/what-is-a-credit-score-en-315/
+https://www.consumerfinance.gov/ask-cfpb/what-is-a-fico-score-en-1883/
+https://www.consumerfinance.gov/consumer-tools/credit-reports-and-scores/answers/key-terms/
+https://www.consumerfinance.gov/ask-cfpb/how-do-i-get-and-keep-a-good-credit-score-en-318/
+https://www.usa.gov/credit-score
+https://www.consumerfinance.gov/ask-cfpb/where-can-i-get-my-credit-scores-en-316/
+
+#Student loans 
+https://financialaidtoolkit.ed.gov/tk/learn/repayment.jsp
+
+
+
+
