@@ -16,6 +16,6 @@ app.add_middleware(
 )
 
 app.include_router(health_router)
-app.include_router(me_router)
+app.include_router(me_router, prefix="/me")
 app.include_router(articles_router)
 
