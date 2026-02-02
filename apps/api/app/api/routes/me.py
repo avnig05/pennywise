@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 from app.core.config import DEV_USER_ID, require_env
 from app.core.supabase_client import supabase
-from app.services.recommendations import get_recommended_articles
+from app.services.recommendations import get_recommended_articles, invalidate_recommendations_cache
 
 router = APIRouter()
 
@@ -54,6 +54,7 @@ def put_me(update: ProfileUpdate):
     try:
         resp = supabase.table("profiles").upsert(payload, on_conflict="user_id").execute()
         rows = resp.data or []
+        invalidate_recommendations_cache(user_id)  # So next feed recomputes with new profile
         return rows[0] if rows else payload
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {e}")

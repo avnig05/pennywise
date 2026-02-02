@@ -1,6 +1,7 @@
 'use client';
 import React from "react";
-import { Bookmark, BookmarkCheck } from "lucide-react";
+import Link from "next/link";
+import { Bookmark, BookmarkCheck, BookOpen } from "lucide-react";
 import { Article } from "@/types";
 import { useBookmarks } from "@/lib/bookmarks";
 
@@ -26,9 +27,16 @@ export default function ArticleCard({ article }: Props) {
       </div>
       <h3 className="mt-4 text-lg font-semibold text-gray-900">{article.title}</h3>
       <p className="mt-2 text-sm text-gray-700">{article.description}</p>
-      <div className="mt-4 flex items-center gap-4 text-sm text-gray-600">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
         <span>{article.readTimeMin} min read</span>
         <span className="rounded-full border px-2 py-1 text-xs">{article.difficulty}</span>
+        <Link
+          href={`/article/${article.id}`}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-sage)] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90"
+        >
+          <BookOpen size={16} />
+          Read
+        </Link>
       </div>
     </div>
   );

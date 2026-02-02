@@ -2,15 +2,17 @@
 Personalized article recommendations using profile + article/chunk content and an LLM.
 Fetches user profile and article metadata + chunk content from Supabase, then asks
 Gemini to return the top N most relevant article IDs for that user.
+Results are cached per user so the dashboard loads instantly after the first computation.
 """
 
 import json
 import re
+from datetime import datetime, timezone
 from typing import Optional
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-from app.core.config import GEMINI_API_KEY, require_env
+from app.core.config import GEMINI_API_KEY, RECOMMENDATIONS_CACHE_TTL_SECONDS, require_env
 from app.core.supabase_client import supabase
 
 
@@ -167,24 +169,99 @@ def get_recommended_article_ids(
         return []
 
 
+def _get_cached_recommendation_ids(user_id: str) -> Optional[list[str]]:
+    """
+    Return cached article IDs for the user if present and not expired.
+    Otherwise return None.
+    """
+    try:
+        resp = (
+            supabase.table("user_recommendations")
+            .select("article_ids, updated_at")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        rows = resp.data or []
+        if not rows:
+            return None
+        row = rows[0]
+        updated_at_str = row.get("updated_at")
+        if not updated_at_str:
+            return None
+        # Parse ISO timestamp (Supabase returns UTC)
+        updated_at = datetime.fromisoformat(updated_at_str.replace("Z", "+00:00"))
+        now = datetime.now(timezone.utc)
+        if (now - updated_at).total_seconds() > RECOMMENDATIONS_CACHE_TTL_SECONDS:
+            return None
+        raw = row.get("article_ids")
+        if raw is None:
+            return None
+        ids = json.loads(raw) if isinstance(raw, str) else raw
+        return [str(x) for x in ids] if isinstance(ids, list) else None
+    except Exception:
+        return None
+
+
+def _set_cached_recommendation_ids(user_id: str, article_ids: list[str]) -> None:
+    """Store recommended article IDs for the user (upsert)."""
+    try:
+        payload = {
+            "user_id": user_id,
+            "article_ids": json.dumps(article_ids),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+        supabase.table("user_recommendations").upsert(
+            payload,
+            on_conflict="user_id",
+        ).execute()
+    except Exception:
+        pass  # Don't fail the request if cache write fails
+
+
+def invalidate_recommendations_cache(user_id: str) -> None:
+    """Clear cached recommendations for the user (e.g. after profile update). Next feed request will recompute."""
+    try:
+        supabase.table("user_recommendations").delete().eq("user_id", user_id).execute()
+    except Exception:
+        pass
+
+
+def _articles_by_ids(article_ids: list[str]) -> list[dict]:
+    """Fetch full article rows for the given IDs, in the same order."""
+    if not article_ids:
+        return []
+    resp = supabase.table("articles").select(
+        "id, title, summary, category, difficulty, source_name, source_url, created_at"
+    ).in_("id", article_ids).execute()
+    rows = resp.data or []
+    id_to_row = {r["id"]: r for r in rows}
+    return [id_to_row[i] for i in article_ids if i in id_to_row]
+
+
 def get_recommended_articles(
     user_id: str,
     top_n: int = TOP_N,
 ) -> list[dict]:
     """
     Get the top N recommended articles for the user as full article rows.
+    Uses cached recommendations when available (instant); otherwise computes once via LLM and caches.
     Returns list of article dicts in recommendation order.
     """
+    # 1. Try cache first (instant path)
+    cached_ids = _get_cached_recommendation_ids(user_id)
+    if cached_ids:
+        ordered = _articles_by_ids(cached_ids[:top_n])
+        if ordered:
+            return ordered
+        # Cache had stale/invalid IDs; fall through to recompute
+
+    # 2. Compute via LLM (slow path)
     top_ids = get_recommended_article_ids(user_id, top_n=top_n)
     if not top_ids:
         return []
 
-    # Fetch full article rows in recommendation order (preserve order)
-    resp = supabase.table("articles").select(
-        "id, title, summary, category, difficulty, source_name, source_url, created_at"
-    ).in_("id", top_ids).execute()
+    # 3. Save to cache for next time
+    _set_cached_recommendation_ids(user_id, top_ids)
 
-    rows = resp.data or []
-    id_to_row = {r["id"]: r for r in rows}
-    ordered = [id_to_row[i] for i in top_ids if i in id_to_row]
-    return ordered
+    # 4. Fetch and return full article rows in order
+    return _articles_by_ids(top_ids)
