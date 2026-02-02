@@ -1,7 +1,18 @@
 import ChatButton from "@/components/ChatButton";
 import ProgressBar from "@/components/ProgressBar";
+import ArticleCard from "@/components/ArticleCard";
+import { getFeed, feedArticleToArticle } from "@/lib/api/feed";
+import type { Article } from "@/types";
 
 export default async function Dashboard() {
+  let recommended: Article[] = [];
+  try {
+    const { articles } = await getFeed(5);
+    recommended = articles.map(feedArticleToArticle);
+  } catch {
+    // API unreachable or error — show empty state below
+  }
+
   return (
     <main className="min-h-screen">
       <section className="mx-auto max-w-6xl px-6 py-8">
@@ -29,7 +40,15 @@ export default async function Dashboard() {
 
         <div className="mt-10">
           <h3 className="text-lg font-semibold text-gray-900">Recommended for You</h3>
-          <div className="mt-4 rounded-2xl border bg-white p-6 text-gray-700">No recommendations available yet.</div>
+          {recommended.length > 0 ? (
+            <div className="mt-4 grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+              {recommended.map((article) => (
+                <ArticleCard key={article.id} article={article} />
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 rounded-2xl border bg-white p-6 text-gray-700">No recommendations available yet.</div>
+          )}
         </div>
       </section>
       <ChatButton />
