@@ -3,7 +3,7 @@ Quick script to test the recommendations service.
 Run from apps/api: python scripts/test_recommendations.py
 
 Requires: .env with DEV_USER_ID (must match a profile in Supabase), GEMINI_API_KEY,
-          and Supabase credentials. Articles and article_chunks must exist.
+          and Supabase credentials. Articles must exist (keywords column recommended).
 """
 
 import json
@@ -14,7 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from app.core.config import DEV_USER_ID, require_env
-from app.services.recommendations import get_recommended_articles, get_profile, get_articles_with_chunk_previews
+from app.services.recommendations import get_recommended_articles, get_profile, get_articles_for_recommendation
 
 
 def main():
@@ -35,12 +35,12 @@ def main():
         sys.exit(1)
     print(f"Profile found (e.g. priority={profile.get('priority')}, interests={profile.get('interests')})\n")
 
-    # 3. Check we have articles with chunk previews
-    articles_preview = get_articles_with_chunk_previews(limit=5)
-    if not articles_preview:
-        print("No articles with chunk previews found. Ingest some articles first (e.g. python scripts/ingest.py).")
+    # 3. Check we have articles (with keywords for best results)
+    articles_payload = get_articles_for_recommendation(limit=5)
+    if not articles_payload:
+        print("No articles found. Ingest some articles first (e.g. python scripts/ingest.py).")
         sys.exit(1)
-    print(f"Candidate articles (sample): {len(articles_preview)} with chunk previews\n")
+    print(f"Candidate articles (sample): {len(articles_payload)} with keywords/metadata\n")
 
     # 4. Get recommendations (this calls the LLM)
     print("Calling get_recommended_articles(user_id, top_n=5)...")

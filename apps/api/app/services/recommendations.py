@@ -1,14 +1,14 @@
 """
-Personalized article recommendations using profile + article/chunk content and an LLM.
-Fetches user profile and article metadata + chunk content from Supabase, then asks
-Gemini to return the top N most relevant article IDs for that user.
+Personalized article recommendations using profile + article keywords and an LLM.
+We send only id, title, category, difficulty, and keywords per article (no full content)
+so the prompt is small and the LLM responds faster.
 Results are cached per user so the dashboard loads instantly after the first computation.
 """
 
 import json
 import re
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Any, Optional
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -16,24 +16,21 @@ from app.core.config import GEMINI_API_KEY, RECOMMENDATIONS_CACHE_TTL_SECONDS, r
 from app.core.supabase_client import supabase
 
 
-# Max characters of chunk content to include per article (to control token usage)
-CHUNK_PREVIEW_MAX_CHARS = 800
-
-# Default number of articles to consider and to recommend
-CANDIDATE_ARTICLE_LIMIT = 30
+# Fallback when an article has no keywords: use short summary slice
+KEYWORDS_FALLBACK_SUMMARY_CHARS = 120
+CANDIDATE_ARTICLE_LIMIT = 15
 TOP_N = 5
 
-
-RECOMMENDATION_PROMPT_TEMPLATE = """You are a financial education advisor. Given a user's profile and a list of articles (with titles, summaries, categories, and content previews from the articles), choose the top {top_n} articles that are most relevant and helpful for this user. Consider:
+RECOMMENDATION_PROMPT_TEMPLATE = """You are a financial education advisor. Given a user's profile and a list of articles (each with id, title, category, difficulty, and keywords), choose the top {top_n} articles that are most relevant and helpful for this user. Consider:
 - Their stated interests and priority (saving, credit, debt, etc.)
 - Their situation (income range, rent status, debt status, emergency buffer, etc.)
 - Article category and difficulty vs. their likely level
-- How well the article content matches what they care about
+- Match between article keywords and what they care about
 
 User profile (JSON):
 {profile_json}
 
-Articles (each has id, title, summary, category, difficulty, and a content_preview from the article):
+Articles (each has id, title, category, difficulty, keywords):
 {articles_json}
 
 Respond with ONLY a JSON array of exactly {top_n} article IDs in order of recommendation (best first). No other text. Example format:
@@ -57,56 +54,53 @@ def get_profile(user_id: str) -> Optional[dict]:
     return rows[0] if rows else None
 
 
-def get_articles_with_chunk_previews(limit: int = CANDIDATE_ARTICLE_LIMIT) -> list[dict]:
-    """
-    Fetch articles with metadata and a content preview from their first chunk.
-    Returns list of dicts: id, title, summary, category, difficulty, content_preview.
-    """
-    articles_resp = (
-        supabase.table("articles")
-        .select("id, title, summary, category, difficulty")
-        .order("created_at", desc=True)
-        .limit(limit)
-        .execute()
-    )
-    articles = articles_resp.data or []
-    if not articles:
+def _normalize_keywords(raw: Any) -> list[str]:
+    """Parse keywords from DB: null, JSON string, or array."""
+    if raw is None:
         return []
+    if isinstance(raw, list):
+        return [str(x).strip() for x in raw if x]
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+            return [str(x).strip() for x in parsed] if isinstance(parsed, list) else []
+        except json.JSONDecodeError:
+            return [x.strip() for x in raw.split(",") if x.strip()]
+    return []
 
-    # For each article, get first chunk's content (truncated)
-    article_ids = [a["id"] for a in articles]
-    chunks_resp = (
-        supabase.table("article_chunks")
-        .select("article_id, content, chunk_index")
-        .in_("article_id", article_ids)
-        .order("chunk_index")
-        .execute()
-    )
-    chunks_by_article: dict[str, list[dict]] = {}
-    for row in (chunks_resp.data or []):
-        aid = row["article_id"]
-        if aid not in chunks_by_article:
-            chunks_by_article[aid] = []
-        chunks_by_article[aid].append(row)
 
-    # Build content_preview from first chunk(s) per article
+def get_articles_for_recommendation(limit: int = CANDIDATE_ARTICLE_LIMIT) -> list[dict]:
+    """
+    Fetch articles with id, title, category, difficulty, and keywords.
+    If keywords is missing or empty, use a short summary slice so the LLM still has something.
+    """
+    try:
+        rows = (
+            supabase.table("articles")
+            .select("id, title, summary, category, difficulty, keywords")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        ).data or []
+    except Exception:
+        rows = (
+            supabase.table("articles")
+            .select("id, title, summary, category, difficulty")
+            .order("created_at", desc=True)
+            .limit(limit)
+            .execute()
+        ).data or []
+
     result = []
-    for a in articles:
-        aid = a["id"]
-        chunks = chunks_by_article.get(aid, [])
-        preview = ""
-        if chunks:
-            first_content = chunks[0].get("content") or ""
-            preview = first_content[:CHUNK_PREVIEW_MAX_CHARS]
-            if len(first_content) > CHUNK_PREVIEW_MAX_CHARS:
-                preview += "..."
+    for a in rows:
+        keywords = _normalize_keywords(a.get("keywords"))
+        summary = (a.get("summary") or "")[:KEYWORDS_FALLBACK_SUMMARY_CHARS]
         result.append({
             "id": a["id"],
-            "title": a.get("title") or "",
-            "summary": (a.get("summary") or "")[:500],
+            "title": (a.get("title") or "")[:150],
             "category": a.get("category") or "",
             "difficulty": a.get("difficulty") or "beginner",
-            "content_preview": preview,
+            "keywords": keywords if keywords else ([summary] if summary else []),
         })
     return result
 
@@ -133,23 +127,22 @@ def get_recommended_article_ids(
     candidate_limit: int = CANDIDATE_ARTICLE_LIMIT,
 ) -> list[str]:
     """
-    Use profile + articles (with chunk previews) to ask the LLM for the top N recommended article IDs.
-    Returns list of article IDs in order (best first).
+    Use profile + articles (id, title, category, difficulty, keywords) to ask the LLM
+    for the top N recommended article IDs. Small payload = fewer tokens = lower latency.
     """
     profile = get_profile(user_id)
     if not profile:
         return []
 
-    articles_with_previews = get_articles_with_chunk_previews(limit=candidate_limit)
-    if not articles_with_previews:
+    articles_payload = get_articles_for_recommendation(limit=candidate_limit)
+    if not articles_payload:
         return []
 
-    if len(articles_with_previews) <= top_n:
-        # Fewer articles than requested; return all in current order
-        return [a["id"] for a in articles_with_previews[:top_n]]
+    if len(articles_payload) <= top_n:
+        return [a["id"] for a in articles_payload[:top_n]]
 
-    profile_json = json.dumps(profile, indent=2)
-    articles_json = json.dumps(articles_with_previews, indent=2)
+    profile_json = json.dumps(profile, separators=(",", ":"))
+    articles_json = json.dumps(articles_payload, separators=(",", ":"))
 
     prompt = RECOMMENDATION_PROMPT_TEMPLATE.format(
         top_n=top_n,
@@ -162,8 +155,7 @@ def get_recommended_article_ids(
         response = llm.invoke(prompt)
         response_text = response.content if hasattr(response, "content") else str(response)
         top_ids = _parse_top_ids_from_response(response_text, top_n)
-        # Ensure we only return IDs that exist in our candidate set
-        valid_ids = {a["id"] for a in articles_with_previews}
+        valid_ids = {a["id"] for a in articles_payload}
         return [i for i in top_ids if i in valid_ids][:top_n]
     except Exception:
         return []
