@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getArticle } from "@/lib/api/articles";
 import ChatButton from "@/components/ChatButton";
+import ArticleQuiz from "@/components/ArticleQuiz";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -61,6 +62,8 @@ export default async function ArticlePage({ params }: Props) {
             <p className="text-gray-500">No content available for this article.</p>
           )}
         </div>
+
+        <ArticleQuiz articleId={id} />
       </article>
       <ChatButton />
     </main>
