@@ -49,7 +49,14 @@ export default async function ArticlePage({ params }: Props) {
             )}
           </div>
           {article.summary && (
-            <p className="mt-4 text-gray-700">{article.summary}</p>
+            <div className="mt-4 text-gray-700">
+              {article.summary
+                .split(/\n\n+/)
+                .filter(Boolean)
+                .map((paragraph, i) => (
+                  <p key={i} className={i > 0 ? "mt-3" : ""}>{paragraph.trim()}</p>
+                ))}
+            </div>
           )}
         </header>
 

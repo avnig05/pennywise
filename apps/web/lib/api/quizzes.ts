@@ -9,9 +9,11 @@ export interface QuizQuestion {
 }
 
 export interface Quiz {
-  quiz_id: string;
+  quiz_id: string | null;
   article_id: string;
   questions: QuizQuestion[];
+  /** Present when API returns; "generating" = quiz not ready yet, poll again */
+  status?: "ready" | "generating";
 }
 
 export interface QuizResult {

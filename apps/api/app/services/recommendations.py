@@ -230,6 +230,31 @@ def _articles_by_ids(article_ids: list[str]) -> list[dict]:
     return [id_to_row[i] for i in article_ids if i in id_to_row]
 
 
+# Same columns as _articles_by_ids for consistent feed response shape
+_FEED_SELECT = "id, title, summary, category, difficulty, source_name, source_url, created_at"
+
+
+def get_recent_feed_articles(top_n: int) -> list[dict]:
+    """Return the latest N articles for instant fallback feed (no LLM). Same shape as cached feed."""
+    resp = (
+        supabase.table("articles")
+        .select(_FEED_SELECT)
+        .order("created_at", desc=True)
+        .limit(max(1, top_n))
+        .execute()
+    )
+    return resp.data or []
+
+
+def get_cached_feed(user_id: str, top_n: int) -> Optional[list[dict]]:
+    """Return cached recommended articles if available and valid; otherwise None."""
+    cached_ids = _get_cached_recommendation_ids(user_id)
+    if not cached_ids:
+        return None
+    ordered = _articles_by_ids(cached_ids[:top_n])
+    return ordered if ordered else None
+
+
 def get_recommended_articles(
     user_id: str,
     top_n: int = TOP_N,

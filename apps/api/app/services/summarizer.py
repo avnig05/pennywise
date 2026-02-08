@@ -18,6 +18,7 @@ Avoid academic or legal-style phrasing.
 
 Formatting rules (must follow):
 - Write 4–6 short paragraphs.
+- Separate each paragraph with a blank line (two newlines).
 - Each paragraph should be 1–2 sentences.
 - Keep sentences concise and direct.
 - Avoid jargon when possible. If a financial term is necessary, briefly explain it in simple words.

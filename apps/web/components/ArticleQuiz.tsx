@@ -7,6 +7,7 @@ import {
   submitQuizAnswers,
   getArticleCompletion,
   regenerateArticleQuiz,
+  type Quiz,
   type QuizQuestion,
 } from "@/lib/api/quizzes";
 
@@ -16,15 +17,12 @@ type Props = {
 };
 
 export default function ArticleQuiz({ articleId, onComplete }: Props) {
-  const [quiz, setQuiz] = useState<{
-    quiz_id: string;
-    article_id: string;
-    questions: QuizQuestion[];
-  } | null>(null);
+  const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [answers, setAnswers] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -36,17 +34,32 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
 
   useEffect(() => {
     let cancelled = false;
+    let pollTimeout: ReturnType<typeof setTimeout> | null = null;
     setLoadError(null);
+
+    async function pollUntilReady() {
+      const maxAttempts = 36; // 2.5s * 36 = 90s
+      for (let attempt = 0; attempt < maxAttempts && !cancelled; attempt++) {
+        const data = await getArticleQuiz(articleId);
+        if (cancelled) return data;
+        if (data.status === "ready" && data.quiz_id && data.questions.length > 0) {
+          return data;
+        }
+        await new Promise((r) => {
+          pollTimeout = setTimeout(r, 2500);
+        });
+      }
+      return null;
+    }
+
     async function load() {
       try {
         const completion = await getArticleCompletion(articleId);
         if (cancelled) return;
         if (completion) {
-          // Load quiz to show questions with answers
           const data = await getArticleQuiz(articleId);
           if (cancelled) return;
           setQuiz(data);
-          // Set user's saved answers if available
           if (completion.user_answers && completion.user_answers.length > 0) {
             setAnswers(completion.user_answers);
           } else {
@@ -60,6 +73,21 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
         }
         const data = await getArticleQuiz(articleId);
         if (cancelled) return;
+        if (data.status === "generating" || (!data.quiz_id && data.questions.length === 0)) {
+          setQuiz({ ...data, questions: [] });
+          setLoading(false);
+          setGenerating(true);
+          const ready = await pollUntilReady();
+          if (cancelled) return;
+          setGenerating(false);
+          if (ready) {
+            setQuiz(ready);
+            setAnswers(new Array(ready.questions.length).fill(-1));
+          } else {
+            setLoadError("Quiz is taking longer than expected. Please refresh to try again.");
+          }
+          return;
+        }
         setQuiz(data);
         setAnswers(new Array(data.questions.length).fill(-1));
       } catch (e) {
@@ -74,6 +102,7 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
     load();
     return () => {
       cancelled = true;
+      if (pollTimeout) clearTimeout(pollTimeout);
     };
   }, [articleId]);
 
@@ -140,11 +169,13 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
     }
   };
 
-  if (loading) {
+  if (loading || generating) {
     return (
       <div className="mt-12 rounded-2xl border bg-white p-8 text-center">
         <Loader2 className="mx-auto h-8 w-8 animate-spin text-[var(--color-sage)]" />
-        <p className="mt-4 text-gray-600">Loading quiz...</p>
+        <p className="mt-4 text-gray-600">
+          {generating ? "Generating your quiz..." : "Loading quiz..."}
+        </p>
       </div>
     );
   }

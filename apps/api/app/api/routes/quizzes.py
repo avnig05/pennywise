@@ -1,11 +1,18 @@
 """Quiz API routes for article quizzes (get quiz, submit answers, completion status)."""
 
-from fastapi import APIRouter, HTTPException
+from typing import Optional
+
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 
 from app.core.config import DEV_USER_ID, require_env
 from app.core.supabase_client import supabase
 from app.models.quiz import QuizSubmissionRequest
-from app.services.quiz_generator import generate_quiz_for_article
+from app.services.quiz_generator import (
+    generate_quiz_for_article,
+    is_quiz_generation_in_progress,
+    mark_quiz_generation_started,
+    run_quiz_generation_and_clear,
+)
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
@@ -14,28 +21,45 @@ def _user_id() -> str:
     return require_env("DEV_USER_ID", DEV_USER_ID)
 
 
+def _quiz_response(article_id: str, quiz_id: Optional[str], questions: list) -> dict:
+    """Build response dict; include status for client polling."""
+    return {
+        "status": "ready" if (quiz_id and questions) else "generating",
+        "quiz_id": quiz_id,
+        "article_id": article_id,
+        "questions": questions,
+    }
+
+
 @router.get("/article/{article_id}")
-def get_article_quiz(article_id: str):
-    """Get quiz for an article. Generates one via LLM if it doesn't exist."""
+def get_article_quiz(article_id: str, background_tasks: BackgroundTasks):
+    """
+    Get quiz for an article. If one exists, return it immediately.
+    If not, return status 'generating' and empty questions, and generate the quiz in the background.
+    Client should poll until status is 'ready' and questions are present.
+    """
     quiz_resp = (
         supabase.table("article_quizzes").select("id").eq("article_id", article_id).execute()
     )
-    quiz_id = None
     if quiz_resp.data:
         quiz_id = quiz_resp.data[0]["id"]
-    else:
-        quiz_id = generate_quiz_for_article(article_id)
-        if not quiz_id:
-            raise HTTPException(status_code=500, detail="Failed to generate quiz")
-    questions_resp = (
-        supabase.table("quiz_questions")
-        .select("*")
-        .eq("quiz_id", quiz_id)
-        .order("question_order")
-        .execute()
-    )
-    questions = questions_resp.data or []
-    return {"quiz_id": quiz_id, "article_id": article_id, "questions": questions}
+        questions_resp = (
+            supabase.table("quiz_questions")
+            .select("*")
+            .eq("quiz_id", quiz_id)
+            .order("question_order")
+            .execute()
+        )
+        questions = questions_resp.data or []
+        return _quiz_response(article_id, quiz_id, questions)
+
+    # No quiz yet: return immediately and generate in background (or already generating)
+    if is_quiz_generation_in_progress(article_id):
+        return _quiz_response(article_id, None, [])
+
+    mark_quiz_generation_started(article_id)
+    background_tasks.add_task(run_quiz_generation_and_clear, article_id, False)
+    return _quiz_response(article_id, None, [])
 
 
 @router.post("/article/{article_id}/submit")
