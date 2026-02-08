@@ -37,6 +37,8 @@
   --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-sage-500: #6B8E7F;
+  --color-sage-600: #5A7A6E;
   --color-primary-50: var(--color-primary-light);
   --color-primary-100: var(--color-primary-light);
   --color-primary-500: var(--color-primary);

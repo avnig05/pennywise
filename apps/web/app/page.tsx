@@ -1,18 +1,21 @@
-import Hero from "@/components/Hero";
-import Features from "@/components/Features";
-import HowItWorks from "@/components/HowItWorks";
-import FAQ from "@/components/FAQ";
-import FinalCTA from "@/components/FinalCTA";
+import Header from "@/components/landing/Header";
+import Hero from "@/components/landing/Hero";
+import HeroImage from "@/components/landing/HeroImage";
+import Features from "@/components/landing/Features";
+import Stats from "@/components/landing/Stats";
+import FinalCTA from "@/components/landing/FinalCTA";
+import Footer from "@/components/landing/Footer";
 
 export default function Home() {
   return (
-    <main className="min-h-screen snap-y snap-mandatory">
+    <main className="bg-white">
+      <Header />
       <Hero />
-      <div id="below-hero" className="scroll-mt-24" />
+      <HeroImage />
       <Features />
-      <HowItWorks />
-      <FAQ />
+      <Stats />
       <FinalCTA />
+      <Footer />
     </main>
   );
 }
