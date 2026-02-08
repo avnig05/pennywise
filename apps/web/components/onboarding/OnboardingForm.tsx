@@ -407,7 +407,8 @@ export default function OnboardingForm() {
         setValidationError(null);
         const ok = await persist();
         if (ok) {
-          router.push("/");
+          document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 30}`;
+          router.push("/dashboard");
         }
       }}
     >
@@ -506,4 +507,3 @@ function CheckboxGroup({ value, options, onChange }: CheckboxGroupProps) {
     </div>
   );
 }
-
