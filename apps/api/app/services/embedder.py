@@ -10,14 +10,18 @@ from app.core.config import GEMINI_API_KEY, require_env
 # Configure Gemini client
 client = genai.Client(api_key=require_env("GEMINI_API_KEY", GEMINI_API_KEY))
 
-# Gemini embedding model - outputs 768-dimensional vectors
-EMBEDDING_MODEL = "text-embedding-004"
+# Gemini embedding model
+# Note: The new google-genai SDK uses "gemini-embedding-001" instead of "text-embedding-004"
+EMBEDDING_MODEL = "gemini-embedding-001"
+# Output 768 dimensions to match database schema (default is 3072)
+EMBEDDING_DIMENSIONS = 768
 
 
 def get_embedding(text: str) -> list[float]:
     result = client.models.embed_content(
         model=EMBEDDING_MODEL,
-        contents=text
+        contents=text,
+        config={"output_dimensionality": EMBEDDING_DIMENSIONS}
     )
     return result.embeddings[0].values
 
