@@ -38,7 +38,8 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
     setLoadError(null);
 
     async function pollUntilReady() {
-      const maxAttempts = 36; // 2.5s * 36 = 90s
+      const pollIntervalMs = 1200; // Check every 1.2s so quiz appears soon after ready
+      const maxAttempts = 75; // ~90s total
       for (let attempt = 0; attempt < maxAttempts && !cancelled; attempt++) {
         const data = await getArticleQuiz(articleId);
         if (cancelled) return data;
@@ -46,7 +47,7 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
           return data;
         }
         await new Promise((r) => {
-          pollTimeout = setTimeout(r, 2500);
+          pollTimeout = setTimeout(r, pollIntervalMs);
         });
       }
       return null;

@@ -44,6 +44,13 @@ export default function ArticleCard({ article }: Props) {
   // This prevents hydration mismatch. After mount, show actual saved state.
   const saved = mounted ? isSaved(article.id) : false;
 
+  // Short excerpt for card (full summary is on the article page)
+  const maxDescLen = 120;
+  const description =
+    article.description.length <= maxDescLen
+      ? article.description
+      : article.description.slice(0, maxDescLen).trim().replace(/\s+\S*$/, "") + "…";
+
   return (
     <div className="group rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md">
       <div className="flex items-start justify-between">
@@ -65,7 +72,7 @@ export default function ArticleCard({ article }: Props) {
         </button>
       </div>
       <h3 className="mt-4 text-lg font-semibold text-gray-900">{article.title}</h3>
-      <p className="mt-2 text-sm text-gray-700">{article.description}</p>
+      <p className="mt-2 text-sm text-gray-700 line-clamp-2">{description}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
         <span>{article.readTimeMin} min read</span>
         <span className="rounded-full border px-2 py-1 text-xs">{article.difficulty}</span>
