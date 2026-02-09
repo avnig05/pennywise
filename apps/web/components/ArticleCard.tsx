@@ -6,6 +6,13 @@ import { Article } from "@/types";
 import { useBookmarks } from "@/lib/bookmarks";
 import { getArticleCompletion } from "@/lib/api/quizzes";
 
+const MAX_DESCRIPTION_CHARS = 400;
+
+function truncateDescription(text: string, maxChars: number): string {
+  if (!text || text.length <= maxChars) return text;
+  return text.slice(0, maxChars).trim() + "...";
+}
+
 type Props = {
   article: Article;
 };
@@ -65,7 +72,7 @@ export default function ArticleCard({ article }: Props) {
         </button>
       </div>
       <h3 className="mt-4 text-lg font-semibold text-gray-900">{article.title}</h3>
-      <p className="mt-2 text-sm text-gray-700">{article.description}</p>
+      <p className="mt-2 text-sm text-gray-700">{truncateDescription(article.description, MAX_DESCRIPTION_CHARS)}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
         <span>{article.readTimeMin} min read</span>
         <span className="rounded-full border px-2 py-1 text-xs">{article.difficulty}</span>

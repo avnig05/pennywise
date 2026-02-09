@@ -13,21 +13,24 @@ router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 def _user_id() -> str:
     return require_env("DEV_USER_ID", DEV_USER_ID)
 
-
+#Get article quiz
 @router.get("/article/{article_id}")
 def get_article_quiz(article_id: str):
     """Get quiz for an article. Generates one via LLM if it doesn't exist."""
     quiz_resp = (
+        #Check if there´s a generated quiz for a specific article
         supabase.table("article_quizzes").select("id").eq("article_id", article_id).execute()
     )
     quiz_id = None
     if quiz_resp.data:
         quiz_id = quiz_resp.data[0]["id"]
     else:
+        #If not data, call generate_quiz_for_article
         quiz_id = generate_quiz_for_article(article_id)
         if not quiz_id:
             raise HTTPException(status_code=500, detail="Failed to generate quiz")
     questions_resp = (
+        #After generating quiz, check quiz_questions
         supabase.table("quiz_questions")
         .select("*")
         .eq("quiz_id", quiz_id)
@@ -114,7 +117,7 @@ def regenerate_article_quiz(article_id: str):
     new_quiz_id = generate_quiz_for_article(article_id, for_regenerate=True)
     if not new_quiz_id:
         raise HTTPException(status_code=500, detail="Failed to generate new quiz")
-
+    #Get the quiz questions
     questions_resp = (
         supabase.table("quiz_questions")
         .select("*")

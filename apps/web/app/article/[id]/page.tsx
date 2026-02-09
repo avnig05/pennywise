@@ -62,7 +62,6 @@ export default async function ArticlePage({ params }: Props) {
             <p className="text-gray-500">No content available for this article.</p>
           )}
         </div>
-
         <ArticleQuiz articleId={id} />
       </article>
       <ChatButton />
