@@ -6,9 +6,12 @@ Results are cached per user so the dashboard loads instantly after the first com
 """
 
 import json
+import logging
 import re
 from datetime import datetime, timezone
 from typing import Any, Optional
+
+log = logging.getLogger(__name__)
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -132,10 +135,12 @@ def get_recommended_article_ids(
     """
     profile = get_profile(user_id)
     if not profile:
+        log.warning("Recommendations: no profile for user_id=%s (complete onboarding for DEV_USER_ID)", user_id)
         return []
 
     articles_payload = get_articles_for_recommendation(limit=candidate_limit)
     if not articles_payload:
+        log.warning("Recommendations: no candidate articles (ingest articles first)")
         return []
 
     if len(articles_payload) <= top_n:
@@ -157,7 +162,8 @@ def get_recommended_article_ids(
         top_ids = _parse_top_ids_from_response(response_text, top_n)
         valid_ids = {a["id"] for a in articles_payload}
         return [i for i in top_ids if i in valid_ids][:top_n]
-    except Exception:
+    except Exception as e:
+        log.warning("Recommendations: LLM failed for user_id=%s: %s", user_id, e)
         return []
 
 

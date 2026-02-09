@@ -1,15 +1,10 @@
 from typing import Optional, Literal, List
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.core.config import DEV_USER_ID, require_env
 from app.core.supabase_client import supabase
-from app.services.recommendations import (
-    get_recommended_articles,
-    get_cached_feed,
-    get_recent_feed_articles,
-    invalidate_recommendations_cache,
-)
+from app.services.recommendations import get_recommended_articles, invalidate_recommendations_cache
 
 router = APIRouter()
 
@@ -51,7 +46,7 @@ def get_me():
     return rows[0]
 
 @router.put("")
-def put_me(update: ProfileUpdate, background_tasks: BackgroundTasks):
+def put_me(update: ProfileUpdate):
     user_id = _user_id()
     payload = update.model_dump(exclude_none=True)
     payload["user_id"] = user_id
@@ -60,25 +55,16 @@ def put_me(update: ProfileUpdate, background_tasks: BackgroundTasks):
         resp = supabase.table("profiles").upsert(payload, on_conflict="user_id").execute()
         rows = resp.data or []
         invalidate_recommendations_cache(user_id)
-        # Precompute personalized recommendations in background so dashboard loads fast
-        background_tasks.add_task(get_recommended_articles, user_id, 20)
+        # Compute personalized recommendations before responding so dashboard shows them immediately
+        get_recommended_articles(user_id, 20)
         return rows[0] if rows else payload
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {e}")
 
 
 @router.get("/feed")
-def get_my_feed(background_tasks: BackgroundTasks, top_n: int = 5):
-    """
-    Get a personalized feed of recommended articles for the current user.
-    Returns cached recommendations instantly when available. When cache is empty,
-    returns latest articles immediately and precomputes personalized feed in background.
-    """
+def get_my_feed(top_n: int = 5):
+    """Get a personalized feed of recommended articles for the current user."""
     user_id = _user_id()
-    top_n = min(max(1, top_n), 20)
-    cached = get_cached_feed(user_id, top_n)
-    if cached:
-        return {"articles": cached}
-    # Cache miss: return recent articles immediately, precompute personalized feed in background
-    background_tasks.add_task(get_recommended_articles, user_id, top_n)
-    return {"articles": get_recent_feed_articles(top_n)}
+    articles = get_recommended_articles(user_id, top_n=min(max(1, top_n), 20))
+    return {"articles": articles}
