@@ -11,24 +11,27 @@ from app.services.scraper import ScrapedArticle
 
 
 # Financial education-focused summarization prompt
-SUMMARY_PROMPT_TEMPLATE = """You are writing for college students, new graduates, and working adults who want to understand financial topics clearly and efficiently.
+SUMMARY_PROMPT_TEMPLATE = """You are writing for college students, new graduates, and working adults who want to understand financial topics clearly. Your summary should cover a substantial amount of the article—the reader should get a thorough overview of the main points, sections, and important details without having to read the full piece.
 
-Use plain, professional language that is easy to read but not oversimplified. 
-Avoid academic or legal-style phrasing.
+Use plain, professional language that is easy to read but not oversimplified. Avoid academic or legal-style phrasing.
 
-Formatting rules (must follow):
-- Write 4–6 short paragraphs.
-- Each paragraph should be 1–2 sentences.
-- Keep sentences concise and direct.
-- Avoid jargon when possible. If a financial term is necessary, briefly explain it in simple words.
-- Do not write long blocks of text.
+Formatting rules (must follow so the summary looks good on screen):
+- Write 8–12 paragraphs so the summary thoroughly covers the article. Separate each paragraph with a blank line (use exactly two newlines between paragraphs).
+- Start with one or two sentences that state the main idea or takeaway, then add paragraphs for each major section or theme in the article.
+- Each paragraph: 2–4 sentences. Be clear and direct but include enough detail to convey the point. Do not skip important sub-points.
+- Use line breaks to create breathing room—no wall of text. The summary should still feel scannable.
+- If the article has steps, tips, or a list of factors, include them (as short bullet-style lines with "• " or "- ", or as 2–3 short sentences).
+- Avoid jargon; if a financial term is needed, briefly explain it in parentheses or in the next few words.
 
-Content rules:
-1) Clearly explain the main financial concept.
-2) Break down key factors or components in an intuitive way.
-3) Briefly explain why this information matters in real life.
+Content rules—cover the article thoroughly:
+1) Clearly explain the main financial concept and why it matters.
+2) Include key definitions, numbers, thresholds, or rules the article mentions.
+3) Break down important factors, options, or trade-offs and how they compare.
+4) Include step-by-step or process information when the article provides it.
+5) Add practical implications: what to do, what to avoid, where to go for more.
+6) Do not leave out major sections or subsections that add real value—the summary should reflect a good amount of the original content.
 
-Avoid marketing language, disclaimers, and filler phrases.
+Avoid marketing language, disclaimers, and filler phrases. Omit only tangents and redundancy.
 
 Article Title: {title}
 Source: {source_name}
@@ -38,7 +41,7 @@ Source: {source_name}
 Article Content:
 {content}
 
-Write a clear, skimmable summary that follows the rules exactly:"""
+Write a thorough, well-formatted summary that covers a good amount of the article and is easy to read. Use blank lines between paragraphs:"""
 
 
 def create_summarizer_llm(temperature: float = 0.3) -> ChatGoogleGenerativeAI:

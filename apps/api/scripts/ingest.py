@@ -5,7 +5,7 @@ Runs: scrape → summarize → chunk → embed → save to Supabase
 
 import argparse
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add parent directory to path so we can import app modules
@@ -18,10 +18,10 @@ from app.services.chunker import chunk_text
 from app.services.embedder import get_embedding
 
 
-def ingest_single_article(url: str, category: str, difficulty: str = "beginner") -> dict:
+def ingest_single_article(url: str, category: str, difficulty: str = "beginner", update_existing: bool = False) -> dict:
     """
     Ingest a single article through the full pipeline.
-    
+    If update_existing is True and the article already exists (same source_url), update it and re-run summary/chunks.
     Returns:
         dict with results or error info
     """
@@ -43,8 +43,9 @@ def ingest_single_article(url: str, category: str, difficulty: str = "beginner")
     result["title"] = scraped.title
     print(f"  ✓ Scraped: {scraped.title}")
     
-    # Step 2: Create article row
+    # Step 2: Create or get article row
     print(f"  Saving to database...")
+    article_id = None
     try:
         article_data = {
             "source_url": url,
@@ -53,7 +54,7 @@ def ingest_single_article(url: str, category: str, difficulty: str = "beginner")
             "original_content": scraped.content,
             "category": category,
             "difficulty": difficulty,
-            "scraped_at": datetime.utcnow().isoformat(),
+            "scraped_at": datetime.now(timezone.utc).isoformat(),
         }
         insert_resp = supabase.table("articles").insert(article_data).execute()
         if not insert_resp.data:
@@ -61,11 +62,30 @@ def ingest_single_article(url: str, category: str, difficulty: str = "beginner")
             return result
         article_id = insert_resp.data[0]["id"]
     except Exception as e:
-        if "duplicate key" in str(e):
-            result["error"] = "Article already exists"
+        if "duplicate key" in str(e).lower() or "already exists" in str(e).lower():
+            if update_existing:
+                existing = supabase.table("articles").select("id").eq("source_url", url).execute()
+                if existing.data and len(existing.data) > 0:
+                    article_id = existing.data[0]["id"]
+                    supabase.table("articles").update({
+                        "source_name": scraped.source_name,
+                        "title": scraped.title,
+                        "original_content": scraped.content,
+                        "category": category,
+                        "difficulty": difficulty,
+                        "scraped_at": datetime.now(timezone.utc).isoformat(),
+                    }).eq("id", article_id).execute()
+                    supabase.table("article_chunks").delete().eq("article_id", article_id).execute()
+                    print(f"  ✓ Updating existing article {article_id}")
+                else:
+                    result["error"] = "Article already exists (could not look up id)"
+                    return result
+            else:
+                result["error"] = "Article already exists (use --update-existing to refresh)"
+                return result
         else:
             result["error"] = f"Database error: {e}"
-        return result
+            return result
     
     # Step 3: Generate summary
     print(f"  Generating summary...")
@@ -161,6 +181,11 @@ def main():
         default="beginner",
         choices=["beginner", "intermediate", "advanced"],
         help="Difficulty level (default: beginner)"
+    )
+    parser.add_argument(
+        "--update-existing",
+        action="store_true",
+        help="If an article with the same URL already exists, update it (re-scrape, re-summarize, re-chunk)"
     )
     
     args = parser.parse_args()

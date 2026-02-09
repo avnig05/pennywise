@@ -1,7 +1,10 @@
+import { Suspense } from "react";
 import ChatButton from "@/components/ChatButton";
 import ProgressBar from "@/components/ProgressBar";
+import RecommendedArticles from "./RecommendedArticles";
+import RecommendedSkeleton from "./RecommendedSkeleton";
 
-export default async function Dashboard() {
+export default function Dashboard() {
   return (
     <main className="min-h-screen">
       <section className="mx-auto max-w-6xl px-6 py-8">
@@ -29,7 +32,9 @@ export default async function Dashboard() {
 
         <div className="mt-10">
           <h3 className="text-lg font-semibold text-gray-900">Recommended for You</h3>
-          <div className="mt-4 rounded-2xl border bg-white p-6 text-gray-700">No recommendations available yet.</div>
+          <Suspense fallback={<RecommendedSkeleton />}>
+            <RecommendedArticles />
+          </Suspense>
         </div>
       </section>
       <ChatButton />

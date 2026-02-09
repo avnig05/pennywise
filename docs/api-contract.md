@@ -17,6 +17,9 @@ Exact verification details will be finalized during backend scaffold.
   - Returns the current user's profile
 - **PUT** `/me`
   - Updates onboarding fields
+- **GET** `/me/feed`
+  - Query: `top_n` (optional, default 5, max 20)
+  - Returns a personalized feed: `{ "articles": [ ... ] }` (top N articles recommended for the user using profile + article/chunk content and an LLM)
 
 ### Topics
 - **GET** `/topics/recommended`

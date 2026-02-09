@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.core.config import DEV_USER_ID, require_env
 from app.core.supabase_client import supabase
+from app.services.recommendations import get_recommended_articles, invalidate_recommendations_cache
 
 router = APIRouter()
 
@@ -35,7 +36,7 @@ class ProfileUpdate(BaseModel):
 def _user_id() -> str:
     return require_env("DEV_USER_ID", DEV_USER_ID)
 
-@router.get("/me")
+@router.get("")
 def get_me():
     user_id = _user_id()
     resp = supabase.table("profiles").select("*").eq("user_id", user_id).execute()
@@ -44,7 +45,7 @@ def get_me():
         raise HTTPException(status_code=404, detail="Profile not found. Complete onboarding.")
     return rows[0]
 
-@router.put("/me")
+@router.put("")
 def put_me(update: ProfileUpdate):
     user_id = _user_id()
     payload = update.model_dump(exclude_none=True)
@@ -53,6 +54,17 @@ def put_me(update: ProfileUpdate):
     try:
         resp = supabase.table("profiles").upsert(payload, on_conflict="user_id").execute()
         rows = resp.data or []
+        invalidate_recommendations_cache(user_id)
+        # Compute personalized recommendations before responding so dashboard shows them immediately
+        get_recommended_articles(user_id, 20)
         return rows[0] if rows else payload
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {e}")
+
+
+@router.get("/feed")
+def get_my_feed(top_n: int = 5):
+    """Get a personalized feed of recommended articles for the current user."""
+    user_id = _user_id()
+    articles = get_recommended_articles(user_id, top_n=min(max(1, top_n), 20))
+    return {"articles": articles}
