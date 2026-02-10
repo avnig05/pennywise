@@ -10,7 +10,6 @@ load_dotenv(dotenv_path=ENV_PATH, override=False)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-DEV_USER_ID = os.getenv("DEV_USER_ID", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 # How long to reuse cached recommendations before recomputing (seconds). Default 24h.
 RECOMMENDATIONS_CACHE_TTL_SECONDS = int(os.getenv("RECOMMENDATIONS_CACHE_TTL_SECONDS", "86400"))

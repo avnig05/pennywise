@@ -135,7 +135,7 @@ def get_recommended_article_ids(
     """
     profile = get_profile(user_id)
     if not profile:
-        log.warning("Recommendations: no profile for user_id=%s (complete onboarding for DEV_USER_ID)", user_id)
+        log.warning("Recommendations: no profile for user_id=%s (user needs to complete onboarding)", user_id)
         return []
 
     articles_payload = get_articles_for_recommendation(limit=candidate_limit)
