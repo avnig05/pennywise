@@ -39,7 +39,7 @@ SUMMARY_PROMPT_TEMPLATE = """You are writing for college students, new graduates
 Use plain, professional language that is easy to read but not oversimplified. Avoid academic or legal-style phrasing.
 
 Formatting rules (must follow so the summary looks good on screen):
-- Write 8–12 paragraphs so the summary thoroughly covers the article. Separate each paragraph with a blank line (use exactly two newlines between paragraphs).
+- Write 6-8 paragraphs so the summary thoroughly covers the article. Separate each paragraph with a blank line (use exactly two newlines between paragraphs).
 - Start with one or two sentences that state the main idea or takeaway, then add paragraphs for each major section or theme in the article.
 - Each paragraph: 2–4 sentences. Be clear and direct but include enough detail to convey the point. Do not skip important sub-points.
 - Use line breaks to create breathing room—no wall of text. The summary should still feel scannable.
