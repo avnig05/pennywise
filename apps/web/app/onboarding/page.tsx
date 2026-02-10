@@ -1,18 +1,31 @@
- 'use client';
- import OnboardingForm from "@/components/onboarding/OnboardingForm";
+import { redirect } from "next/navigation";
+import OnboardingForm from "../../components/onboarding/OnboardingForm";
 
-export default function OnboardingPage() {
+export default async function OnboardingPage() {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+  
+  try {
+    const res = await fetch(`${apiBase}/me`, { cache: "no-store" });
+    
+    // If user already has a profile, redirect to dashboard
+    if (res.ok) {
+      redirect("/dashboard");
+    }
+  } catch {
+    // If API is down, allow access to onboarding
+  }
+
   return (
-    <main className="min-h-screen">
-      <section className="mx-auto max-w-2xl px-6 py-12">
-        <div className="rounded-[12px] border bg-white p-6 shadow-sm" style={{ borderColor: 'var(--border-color)' }}>
-          <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Personalize your Pennywise</h1>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">Answer a few questions so we can tailor recommendations.</p>
-          <div className="mt-6">
-            <OnboardingForm />
-          </div>
+    <main className="min-h-screen p-8">
+      <div className="mx-auto max-w-2xl">
+        <h1 className="text-3xl font-bold">Personalize your Pennywise</h1>
+        <p className="mt-2 text-sm text-neutral-600">
+          Answer a few questions so we can tailor recommendations.
+        </p>
+        <div className="mt-8 rounded-lg border p-6">
+          <OnboardingForm />
         </div>
-      </section>
+      </div>
     </main>
   );
 }

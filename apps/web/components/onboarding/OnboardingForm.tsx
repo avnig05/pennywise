@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import StepIndicator from "./StepIndicator";
+import { StateCombobox } from "./StateCombobox";
 import type {
   AgeRange,
   CreditCardStatus,
@@ -19,22 +20,6 @@ import { updateProfile } from "../../lib/api/profile";
 
 type FormState = ProfileUpdate & { interests: string[] };
 
-type RadioGroupOption<T extends string> = {
-  value: T;
-  label: string;
-};
-type RadioGroupProps<T extends string> = {
-  name: string;
-  value: T | null | undefined;
-  options: RadioGroupOption<T>[];
-  onChange: (value: T) => void;
-};
-type CheckboxGroupProps = {
-  value: string[];
-  options: string[];
-  onChange: (value: string[]) => void;
-};
-
 const AGE_OPTIONS: RadioGroupOption<AgeRange>[] = [
   { value: "lt_18", label: "Under 18" },
   { value: "18_24", label: "18-24" },
@@ -45,6 +30,7 @@ const AGE_OPTIONS: RadioGroupOption<AgeRange>[] = [
   { value: "65_plus", label: "65+" },
   { value: "unknown", label: "Prefer not to say" },
 ];
+
 const INCOME_OPTIONS: RadioGroupOption<NetIncomeRange>[] = [
   { value: "lt_1500", label: "Less than $1,500/month" },
   { value: "1500_2500", label: "$1,500-$2,500/month" },
@@ -52,11 +38,13 @@ const INCOME_OPTIONS: RadioGroupOption<NetIncomeRange>[] = [
   { value: "gt_4000", label: "More than $4,000/month" },
   { value: "unknown", label: "Prefer not to say" },
 ];
+
 const JOB_TYPE_OPTIONS: RadioGroupOption<JobType>[] = [
   { value: "w2", label: "W-2 employee" },
   { value: "1099", label: "1099 / contractor" },
   { value: "unknown", label: "Not sure" },
 ];
+
 const PAY_FREQUENCY_OPTIONS: RadioGroupOption<PayFrequency>[] = [
   { value: "weekly", label: "Weekly" },
   { value: "biweekly", label: "Every two weeks" },
@@ -64,6 +52,7 @@ const PAY_FREQUENCY_OPTIONS: RadioGroupOption<PayFrequency>[] = [
   { value: "monthly", label: "Monthly" },
   { value: "unknown", label: "Not sure" },
 ];
+
 const RENT_STATUS_OPTIONS: RadioGroupOption<RentStatus>[] = [
   { value: "rent", label: "Renting" },
   { value: "parents", label: "Living with parents" },
@@ -71,30 +60,35 @@ const RENT_STATUS_OPTIONS: RadioGroupOption<RentStatus>[] = [
   { value: "other", label: "Other" },
   { value: "unknown", label: "Prefer not to say" },
 ];
+
 const DEBT_STATUS_OPTIONS: RadioGroupOption<DebtStatus>[] = [
   { value: "none", label: "No debt" },
   { value: "student_loans", label: "Student loans" },
   { value: "credit_card", label: "Credit card debt" },
   { value: "both", label: "Student loans + credit cards" },
 ];
+
 const CREDIT_CARD_STATUS_OPTIONS: RadioGroupOption<CreditCardStatus>[] = [
   { value: "no_card", label: "No credit card" },
   { value: "have_not_used", label: "Have one, don't use it" },
   { value: "use_sometimes", label: "Use sometimes" },
   { value: "use_often", label: "Use often" },
 ];
+
 const EMERGENCY_BUFFER_OPTIONS: RadioGroupOption<EmergencyBufferRange>[] = [
   { value: "zero", label: "$0 saved" },
   { value: "lt_500", label: "Less than $500" },
   { value: "500_2000", label: "$500-$2,000" },
   { value: "gt_2000", label: "More than $2,000" },
 ];
+
 const PRIORITY_OPTIONS: RadioGroupOption<Priority>[] = [
   { value: "save", label: "Build savings" },
   { value: "credit", label: "Improve credit" },
   { value: "debt", label: "Pay down debt" },
   { value: "unsure", label: "Not sure yet" },
 ];
+
 const INTEREST_OPTIONS = [
   "Budgeting",
   "Saving",
@@ -104,7 +98,7 @@ const INTEREST_OPTIONS = [
   "Taxes",
   "Side income",
 ];
-const US_STATES = ["AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN","IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT","VA","WA","WV","WI","WY"];
+
 
 export default function OnboardingForm() {
   const router = useRouter();
@@ -156,21 +150,12 @@ export default function OnboardingForm() {
         id: "state",
         title: "Which state do you live in?",
         body: (
-          <select
-            className="mt-4 w-full rounded-[8px] border px-3 py-2 text-sm"
-            style={{ borderColor: 'var(--border-color)' }}
-            value={formState.state ?? ""}
-            onChange={(event) =>
-              setFormState((prev) => ({ ...prev, state: event.target.value || null }))
+          <StateCombobox
+            value={formState.state ?? null}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, state: value }))
             }
-          >
-            <option value="">Select a state</option>
-            {US_STATES.map((abbr) => (
-              <option key={abbr} value={abbr}>
-                {abbr}
-              </option>
-            ))}
-          </select>
+          />
         ),
       },
       {
@@ -369,7 +354,7 @@ export default function OnboardingForm() {
     >
       <StepIndicator currentStep={stepIndex} totalSteps={totalSteps} />
       <div>
-        <h2 className="text-lg font-semibold text-[var(--text-primary)]">{currentStep.title}</h2>
+        <h2 className="text-lg font-semibold">{currentStep.title}</h2>
         {currentStep.body}
       </div>
       {validationError ? (
@@ -380,8 +365,7 @@ export default function OnboardingForm() {
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
-          className="rounded-[8px] border px-4 py-2 text-sm"
-          style={{ borderColor: 'var(--border-color)' }}
+          className="cursor-pointer rounded-md border px-4 py-2 text-sm"
           onClick={handleBack}
           disabled={stepIndex === 0}
         >
@@ -389,7 +373,7 @@ export default function OnboardingForm() {
         </button>
         <button
           type={isLastStep ? "submit" : "button"}
-          className="rounded-[8px] bg-[var(--color-primary)] px-4 py-2 text-sm text-white disabled:opacity-60"
+          className="cursor-pointer rounded-md bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-60"
           onClick={handleNext}
           disabled={isSaving}
         >
@@ -399,6 +383,18 @@ export default function OnboardingForm() {
     </form>
   );
 }
+
+type RadioGroupOption<T extends string> = {
+  value: T;
+  label: string;
+};
+
+type RadioGroupProps<T extends string> = {
+  name: string;
+  value: T | null | undefined;
+  options: RadioGroupOption<T>[];
+  onChange: (value: T) => void;
+};
 
 function RadioGroup<T extends string>({ name, value, options, onChange }: RadioGroupProps<T>) {
   return (
@@ -412,12 +408,18 @@ function RadioGroup<T extends string>({ name, value, options, onChange }: RadioG
             checked={value === option.value}
             onChange={() => onChange(option.value)}
           />
-          <span className="text-[var(--text-secondary)]">{option.label}</span>
+          <span>{option.label}</span>
         </label>
       ))}
     </div>
   );
 }
+
+type CheckboxGroupProps = {
+  value: string[];
+  options: string[];
+  onChange: (value: string[]) => void;
+};
 
 function CheckboxGroup({ value, options, onChange }: CheckboxGroupProps) {
   return (
@@ -438,7 +440,7 @@ function CheckboxGroup({ value, options, onChange }: CheckboxGroupProps) {
                 }
               }}
             />
-            <span className="text-[var(--text-secondary)]">{option}</span>
+            <span>{option}</span>
           </label>
         );
       })}

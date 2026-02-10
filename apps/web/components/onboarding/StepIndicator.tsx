@@ -5,7 +5,7 @@ type StepIndicatorProps = {
 
 export default function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   return (
-    <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
+    <div className="flex items-center justify-between text-xs text-neutral-600">
       <span>
         Step {currentStep + 1} of {totalSteps}
       </span>
@@ -14,7 +14,7 @@ export default function StepIndicator({ currentStep, totalSteps }: StepIndicator
           <span
             key={index}
             className={`h-1 w-full rounded-full ${
-              index <= currentStep ? "bg-[var(--color-primary)]" : "bg-[var(--border-color)]"
+              index <= currentStep ? "bg-neutral-900" : "bg-neutral-200"
             }`}
           />
         ))}
@@ -22,3 +22,4 @@ export default function StepIndicator({ currentStep, totalSteps }: StepIndicator
     </div>
   );
 }
+

@@ -1,12 +1,14 @@
-export async function updateProfile(update: unknown): Promise<unknown> {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-  const res = await fetch(`${base}/me`, {
+import { apiFetch } from "./client";
+import type { Profile, ProfileUpdate } from "../../types/profile";
+
+export async function getProfile(): Promise<Profile> {
+  return apiFetch<Profile>("/me", { method: "GET" });
+}
+
+export async function updateProfile(update: ProfileUpdate): Promise<Profile> {
+  return apiFetch<Profile>("/me", {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(update),
   });
-  if (!res.ok) {
-    throw new Error(`API responded ${res.status}`);
-  }
-  return res.json();
 }
+

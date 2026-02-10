@@ -34,3 +34,4 @@ export type ProfileUpdate = {
 export type Profile = ProfileUpdate & {
   user_id?: string;
 };
+

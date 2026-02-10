@@ -1,4 +1,41 @@
+# =====================
+# Node / Frontend
+# =====================
 node_modules/
+dist/
+build/
+.next/
+out/
+coverage/
+*.log
+
+# env files (DO NOT COMMIT)
 .env
+.env.local
+.env.*.local
+
+# =====================
+# Python / Backend
+# =====================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# virtual environments
+.venv/
+venv/
+env/
+
+# tooling caches
+pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =====================
+# OS / Editors
+# =====================
 .DS_Store
-pennywise/
+Thumbs.db
+.vscode/
+.idea/
