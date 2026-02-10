@@ -1,13 +1,40 @@
 """
 Summarizer service for financial education articles.
 Uses Google Gemini via LangChain to create concise, educational summaries.
+Also provides LLM-based classification for category and difficulty.
 """
 
-from typing import Optional
+import re
+import time
+from typing import Optional, Tuple
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.core.config import GEMINI_API_KEY, require_env
 from app.services.scraper import ScrapedArticle
+
+# Valid values for classification (must match app.models.article)
+CATEGORIES = [
+    "budgeting", "investing", "credit cards", "credit score",
+    "student loans", "debt management", "taxes", "savings",
+]
+DIFFICULTIES = ["beginner", "intermediate", "advanced"]
+
+CLASSIFY_PROMPT_TEMPLATE = """You are classifying a financial education article. Based on the title and content below, choose exactly one category and one difficulty.
+
+Categories (pick one): budgeting, investing, credit cards, credit score, student loans, debt management, taxes, savings
+
+Difficulty (pick one): beginner = introductory/basic, intermediate = some finance knowledge, advanced = assumes familiarity or specialized terms
+
+Respond with exactly these two lines, nothing else:
+Category: <one word from the list above, e.g. credit cards>
+Difficulty: <beginner or intermediate or advanced>
+
+Article Title: {title}
+
+Article Content (excerpt):
+{content_excerpt}
+"""
 
 
 # Financial education-focused summarization prompt
@@ -42,6 +69,41 @@ Article Content:
 {content}
 
 Write a thorough, well-formatted summary that covers a good amount of the article and is easy to read. Use blank lines between paragraphs:"""
+
+
+def _is_rate_limit_error(e: BaseException) -> bool:
+    """True if the exception is a Gemini 429 / RESOURCE_EXHAUSTED rate limit."""
+    msg = str(e).lower()
+    return "429" in msg or "resource_exhausted" in msg
+
+
+def _parse_retry_seconds(e: BaseException) -> float:
+    """Parse retry delay from Gemini error message. Returns default 60.0 if not found."""
+    msg = str(e)
+    # "Please retry in 52.467881627s." or "retryDelay': '33s'"
+    m = re.search(r"retry in (\d+(?:\.\d+)?)\s*s", msg, re.I)
+    if m:
+        return float(m.group(1))
+    m = re.search(r"retrydelay['\"]?\s*[:=]\s*['\"]?(\d+)s?", msg, re.I)
+    if m:
+        return float(m.group(1))
+    return 60.0
+
+
+def _invoke_with_retry(llm: ChatGoogleGenerativeAI, prompt: str, max_retries: int = 5):
+    """Call llm.invoke(prompt), retrying on 429 RESOURCE_EXHAUSTED with backoff."""
+    last_error = None
+    for attempt in range(max_retries):
+        try:
+            return llm.invoke(prompt)
+        except Exception as e:
+            last_error = e
+            if _is_rate_limit_error(e) and attempt < max_retries - 1:
+                delay = _parse_retry_seconds(e)
+                time.sleep(delay)
+                continue
+            raise
+    raise last_error
 
 
 def create_summarizer_llm(temperature: float = 0.3) -> ChatGoogleGenerativeAI:
@@ -96,19 +158,15 @@ def summarize_article(
         content=article.content,
     )
     
-    # Initialize LLM and generate summary
+    # Initialize LLM and generate summary (with retry on rate limit)
     llm = create_summarizer_llm(temperature=temperature)
     
     try:
-        # Invoke the LLM with the prompt
-        response = llm.invoke(prompt)
-        # Extract content from response (LangChain returns AIMessage)
+        response = _invoke_with_retry(llm, prompt)
         summary = response.content if hasattr(response, 'content') else str(response)
         summary = summary.strip()
         
-        # Optionally truncate if max_length specified
         if max_length and len(summary) > max_length:
-            # Truncate at sentence boundary if possible
             truncated = summary[:max_length]
             last_period = truncated.rfind(".")
             if last_period > max_length * 0.8:  # Only if we're not cutting too much
@@ -157,4 +215,59 @@ def summarize_content(
     )
     
     return summarize_article(article, max_length=max_length, temperature=temperature)
+
+
+def classify_article(
+    article: ScrapedArticle,
+    content_max_chars: int = 4000,
+    temperature: float = 0.1,
+) -> Tuple[str, str]:
+    """
+    Classify a scraped article into category and difficulty using the LLM.
+
+    Args:
+        article: The ScrapedArticle to classify
+        content_max_chars: Max characters of content to send (to stay within token limits)
+        temperature: Low value for consistent classification
+
+    Returns:
+        (category, difficulty) where category is one of CATEGORIES and difficulty is one of DIFFICULTIES
+    """
+    excerpt = (article.content or "")[:content_max_chars].strip()
+    if not excerpt:
+        # Explicit signal that we could not classify (no silent defaults)
+        return "", ""
+
+    prompt = CLASSIFY_PROMPT_TEMPLATE.format(
+        title=article.title or "Untitled",
+        content_excerpt=excerpt,
+    )
+    llm = create_summarizer_llm(temperature=temperature)
+    try:
+        response = llm.invoke(prompt)
+    except Exception as e:
+        # If classification completely fails, fall back to safe defaults
+        raise Exception(f"Failed to classify article: {e}")
+
+    # LangChain can return content as str or list of blocks
+    content = response.content if hasattr(response, "content") else str(response)
+    if isinstance(content, list):
+        raw = " ".join(
+            (c.get("text", "") if isinstance(c, dict) else str(c) for c in content)
+        )
+    else:
+        raw = str(content)
+    raw = raw.strip()
+
+    # Parse "Category: X" and "Difficulty: Y" (no JSON to avoid quote/encoding issues)
+    cat_match = re.search(r"category\s*:\s*([a-z0-9_\-\s]+)", raw, re.I)
+    diff_match = re.search(r"difficulty\s*:\s*([a-z]+)", raw, re.I)
+    raw_category = cat_match.group(1).strip().lower() if cat_match else ""
+    raw_difficulty = diff_match.group(1).strip().lower() if diff_match else ""
+
+    # If we couldn't even parse either field, explicitly signal failure
+    if not raw_category or not raw_difficulty:
+        return "", ""
+
+    return raw_category, raw_difficulty
 
