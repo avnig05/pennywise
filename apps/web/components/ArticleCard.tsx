@@ -52,7 +52,13 @@ export default function ArticleCard({ article }: Props) {
       : article.description.slice(0, maxDescLen).trim().replace(/\s+\S*$/, "") + "…";
 
   return (
-    <div className="group rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md">
+    <div
+      className={`group rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${
+        isCompleted
+          ? "border-green-400 bg-gradient-to-br from-green-50 to-emerald-50"
+          : "bg-white"
+      }`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <span className="rounded-full border px-3 py-1 text-xs text-gray-700">{article.category}</span>
@@ -86,7 +92,7 @@ export default function ArticleCard({ article }: Props) {
           className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-sage)] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90"
         >
           <BookOpen size={16} />
-          Read
+          {isCompleted ? "Review article" : "Read"}
         </Link>
       </div>
     </div>
