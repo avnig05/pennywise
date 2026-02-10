@@ -34,6 +34,14 @@ python -m scripts.ingest --url "https://example.com/article" --category budgetin
 python -m scripts.ingest --url "https://example.com/article" --category credit_cards --difficulty intermediate
 ```
 
+### Auto-classify category and difficulty from content
+To have the LLM infer each article’s category and difficulty from its content (so you get variety instead of all "budgeting" / "beginner"):
+```bash
+python -m scripts.ingest --file data/urls.txt --auto-classify
+# or for a single URL:
+python -m scripts.ingest --url "https://example.com/article" --auto-classify
+```
+
 ## urls.txt Format
 
 Add URLs to `data/urls.txt`, one per line:
