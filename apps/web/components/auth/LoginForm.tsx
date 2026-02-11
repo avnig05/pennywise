@@ -44,9 +44,9 @@ export default function LoginForm() {
       router.replace(redirectTo);
     } catch (err) {
       console.error("Login error:", err);
-      // Dev mode fallback
-      document.cookie = `sb-access-token=dev_${Date.now()}; path=/; max-age=${60 * 60 * 24 * 7}`;
-      router.replace('/dashboard');
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
