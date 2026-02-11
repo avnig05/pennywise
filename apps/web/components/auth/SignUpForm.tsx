@@ -50,7 +50,8 @@ export default function SignUpForm() {
         // Small delay to ensure cookies are set
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        router.replace('/onboarding');
+        // Force full page reload so global providers (e.g. bookmarks) refetch user data
+        window.location.href = '/onboarding';
       } else {
         // Email confirmation required - show message
         setError("Please check your email to confirm your account before continuing.");
