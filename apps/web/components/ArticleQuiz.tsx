@@ -211,15 +211,22 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
         >
           <Link
             href="/dashboard"
-            className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border-2 border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900"
-            aria-label="Back to home"
+            className="absolute left-6 top-6 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Home</span>
+            Back to dashboard
           </Link>
           <div className="text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle2 className="h-12 w-12 text-green-600" />
+            <div
+              className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full text-5xl ${
+                score >= 70
+                  ? "bg-green-100"
+                  : score >= 50
+                  ? "bg-yellow-100"
+                  : "bg-red-100"
+              }`}
+            >
+              {score >= 90 ? "🤩" : score >= 65 ? "😊" : score >= 40 ? "😐" : "😢"}
             </div>
             <div className="mt-6 inline-flex items-center gap-2 rounded-full border-2 border-green-300 bg-green-100 px-4 py-2">
               <span className="text-sm font-semibold uppercase tracking-wide text-green-800">
@@ -229,11 +236,27 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
             <h2 className="mt-4 text-2xl font-semibold text-gray-900">Quiz completed</h2>
             <p className="mt-3 text-lg text-gray-700">
               Your score:{" "}
-              <span className="font-bold text-green-700">{score}%</span>
+              <span
+                className={`font-bold ${
+                  score >= 90
+                    ? "text-green-800"
+                    : score >= 70
+                    ? "text-green-700"
+                    : score >= 50
+                    ? "text-yellow-700"
+                    : "text-red-700"
+                }`}
+              >
+                {score}%
+              </span>
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              {score >= 70
-                ? "Great job — you understand the material well."
+              {score >= 90
+                ? "Amazing work, you really mastered this!"
+                : score >= 65
+                ? "Great job, you understand the material well."
+                : score >= 40
+                ? "Not bad! Consider reviewing some sections to improve."
                 : "Consider reviewing the article to improve your understanding."}
             </p>
             <div className="mt-6 flex justify-center">
@@ -364,6 +387,17 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
             </button>
           </div>
         </div>
+
+        {/* Back to dashboard at the end of the quiz */}
+        <div className="mt-4 flex justify-start">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to dashboard</span>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -451,6 +485,17 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
           </p>
         </div>
       )}
+
+      {/* Back to dashboard at the end of the quiz */}
+      <div className="mt-8 flex justify-start">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to dashboard</span>
+        </Link>
+      </div>
     </div>
   );
 }
