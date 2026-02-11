@@ -32,6 +32,11 @@ class ProfileUpdate(BaseModel):
     emergency_buffer_range: Optional[Literal["zero", "lt_500", "500_2000", "gt_2000"]] = None
     priority: Optional[Literal["save", "credit", "debt", "unsure"]] = None
     interests: Optional[List[str]] = None
+    saved_articles: Optional[List[str]] = None
+
+
+class ToggleSavedBody(BaseModel):
+    article_id: str
 
 
 @router.get("")
@@ -63,3 +68,24 @@ async def get_my_feed(top_n: int = 5, user_id: str = Depends(get_current_user_id
     """Get a personalized feed of recommended articles for the current user."""
     articles = get_recommended_articles(user_id, top_n=min(max(1, top_n), 20))
     return {"articles": articles}
+
+
+@router.post("/saved/toggle")
+async def toggle_saved_article(
+    body: ToggleSavedBody, user_id: str = Depends(get_current_user_id)
+):
+    """Add or remove an article from the user's saved list. Returns the updated list."""
+    resp = supabase.table("profiles").select("saved_articles").eq("user_id", user_id).execute()
+    rows = resp.data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail="Profile not found. Complete onboarding.")
+    current = list(rows[0].get("saved_articles") or [])
+    if body.article_id in current:
+        current = [a for a in current if a != body.article_id]
+    else:
+        current = current + [body.article_id]
+    try:
+        supabase.table("profiles").update({"saved_articles": current}).eq("user_id", user_id).execute()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update saved articles: {e}")
+    return {"saved_articles": current}
