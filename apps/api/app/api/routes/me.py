@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from app.core.auth import get_current_user_id
 from app.core.supabase_client import supabase
 from app.services.recommendations import get_recommended_articles, invalidate_recommendations_cache
+from app.services.tip_generator import get_or_generate_tip
 
 router = APIRouter()
 
@@ -63,3 +64,15 @@ async def get_my_feed(top_n: int = 5, user_id: str = Depends(get_current_user_id
     """Get a personalized feed of recommended articles for the current user."""
     articles = get_recommended_articles(user_id, top_n=min(max(1, top_n), 20))
     return {"articles": articles}
+
+
+@router.get("/tip")
+async def get_my_tip(user_id: str = Depends(get_current_user_id)):
+    """
+    Get the personalized tip of the day for the current user.
+    Returns the existing tip if it's less than 24 hours old, otherwise generates a new one.
+    """
+    tip = get_or_generate_tip(user_id)
+    if not tip:
+        raise HTTPException(status_code=404, detail="Unable to generate tip. Complete your profile.")
+    return tip
