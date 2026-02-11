@@ -1,8 +1,8 @@
 from typing import Optional, Literal, List
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
-from app.core.config import DEV_USER_ID, require_env
+from app.core.auth import get_current_user_id
 from app.core.supabase_client import supabase
 from app.services.recommendations import get_recommended_articles, invalidate_recommendations_cache
 
@@ -33,12 +33,9 @@ class ProfileUpdate(BaseModel):
     priority: Optional[Literal["save", "credit", "debt", "unsure"]] = None
     interests: Optional[List[str]] = None
 
-def _user_id() -> str:
-    return require_env("DEV_USER_ID", DEV_USER_ID)
 
 @router.get("")
-def get_me():
-    user_id = _user_id()
+async def get_me(user_id: str = Depends(get_current_user_id)):
     resp = supabase.table("profiles").select("*").eq("user_id", user_id).execute()
     rows = resp.data or []
     if not rows:
@@ -46,8 +43,7 @@ def get_me():
     return rows[0]
 
 @router.put("")
-def put_me(update: ProfileUpdate):
-    user_id = _user_id()
+async def put_me(update: ProfileUpdate, user_id: str = Depends(get_current_user_id)):
     payload = update.model_dump(exclude_none=True)
     payload["user_id"] = user_id
 
@@ -63,8 +59,7 @@ def put_me(update: ProfileUpdate):
 
 
 @router.get("/feed")
-def get_my_feed(top_n: int = 5):
+async def get_my_feed(top_n: int = 5, user_id: str = Depends(get_current_user_id)):
     """Get a personalized feed of recommended articles for the current user."""
-    user_id = _user_id()
     articles = get_recommended_articles(user_id, top_n=min(max(1, top_n), 20))
     return {"articles": articles}
