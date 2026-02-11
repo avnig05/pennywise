@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
 import {
   getArticleQuiz,
   submitQuizAnswers,
@@ -206,8 +207,16 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
         {/* Completed header - scroll target after submit */}
         <div
           ref={resultSectionRef}
-          className="rounded-2xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-8 shadow-sm"
+          className="relative rounded-2xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-8 shadow-sm"
         >
+          <Link
+            href="/dashboard"
+            className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border-2 border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:border-gray-400 hover:bg-gray-50 hover:text-gray-900"
+            aria-label="Back to home"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Home</span>
+          </Link>
           <div className="text-center">
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
               <CheckCircle2 className="h-12 w-12 text-green-600" />
@@ -227,6 +236,26 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
                 ? "Great job — you understand the material well."
                 : "Consider reviewing the article to improve your understanding."}
             </p>
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={handleRegenerateQuiz}
+                disabled={regenerating}
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-sage)] px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+              >
+                {regenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    Regenerate quiz
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 

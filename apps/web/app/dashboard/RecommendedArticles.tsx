@@ -1,17 +1,43 @@
+'use client';
+
+import { useEffect, useState } from "react";
 import ArticleCard from "@/components/ArticleCard";
 import { getFeed, feedArticleToArticle } from "@/lib/api/feed";
 import type { Article } from "@/types";
+import RecommendedSkeleton from "./RecommendedSkeleton";
 
-export default async function RecommendedArticles() {
-  let recommended: Article[] = [];
-  try {
-    const { articles } = await getFeed(5);
-    recommended = articles.map(feedArticleToArticle);
-  } catch {
-    // API unreachable or error — show empty state
+export default function RecommendedArticles() {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getFeed(5)
+      .then(({ articles: feedArticles }) => {
+        if (!cancelled) {
+          setArticles(feedArticles.map(feedArticleToArticle));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setArticles([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (loading) {
+    return <RecommendedSkeleton />;
   }
 
-  if (recommended.length === 0) {
+  if (articles.length === 0) {
     return (
       <div className="mt-4 rounded-2xl border bg-white p-6 text-gray-700">
         No recommendations available yet.
@@ -21,7 +47,7 @@ export default async function RecommendedArticles() {
 
   return (
     <div className="mt-4 grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-      {recommended.map((article) => (
+      {articles.map((article) => (
         <ArticleCard key={article.id} article={article} />
       ))}
     </div>
