@@ -29,6 +29,7 @@ export type ProfileUpdate = {
   emergency_buffer_range?: EmergencyBufferRange | null;
   priority?: Priority | null;
   interests?: string[] | null;
+  saved_articles?: string[] | null;
 };
 
 export type Profile = ProfileUpdate & {
