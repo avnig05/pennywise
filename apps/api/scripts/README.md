@@ -42,12 +42,14 @@ python -m scripts.ingest --file data/urls.txt --auto-classify
 python -m scripts.ingest --url "https://example.com/article" --auto-classify
 ```
 
-### Update an existing article (same URL)
-If the article is already in the DB, by default ingestion is skipped. Use `--update-existing` to refresh the summary (and chunks/embeddings unless disabled):
+### Update an existing article / regenerate chunks and embeddings
+If the article is already in the DB, by default the script **skips everything** (no scrape, no chunks, no embeddings). To regenerate summary and **chunks + embeddings** from stored content, use `--update-existing`:
 
 ```bash
-python -m scripts.ingest --file data/urls.txt --auto-classify --update-existing
+python -m scripts.ingest --file data/urls_bank_accounts.txt --update-existing
 ```
+
+Use the same URL file format (e.g. `url,category,difficulty`); no `--auto-classify` needed if the file has category/difficulty.
 
 ### Skip embeddings (saves Gemini quota)
 Embedding calls usually dominate quota usage. Use `--no-embeddings` to skip chunking/embeddings:
@@ -55,6 +57,38 @@ Embedding calls usually dominate quota usage. Use `--no-embeddings` to skip chun
 ```bash
 python -m scripts.ingest --file data/urls.txt --auto-classify --no-embeddings
 ```
+
+### Chunks and embeddings only (no classification or summary)
+To regenerate only chunks and embeddings—no LLM calls, so no quota and faster:
+
+- **Existing articles only (URL-only file):** the script uses category/difficulty already in the DB.
+- **File has new URLs too:** pass the category and difficulty for that file so new articles get the right metadata:
+
+```bash
+# Example: interest file → investing, beginner
+python -m scripts.ingest --file data/urls_interest.txt --update-existing --chunks-only --category investing --difficulty beginner
+
+# Example: bank accounts file → savings, beginner
+python -m scripts.ingest --file data/urls_bank_accounts.txt --update-existing --chunks-only --category savings --difficulty beginner
+```
+
+Use the category that matches the URL file (e.g. `taxes`, `investing`, `savings`, `budgeting`, `credit score`, `student loans`, `credit cards`, `debt management`).
+
+### Recreate `article_chunks` table (if you dropped it)
+In Supabase SQL Editor, run (adjust if you use pgvector; otherwise `embedding` as `jsonb` or `real[]` works):
+
+```sql
+create table if not exists article_chunks (
+  id uuid primary key default gen_random_uuid(),
+  article_id uuid not null references articles(id) on delete cascade,
+  chunk_index int not null,
+  content text not null,
+  embedding real[]  -- or vector(768) with pgvector extension
+);
+create index if not exists article_chunks_article_id_idx on article_chunks(article_id);
+```
+
+Then run ingest with `--update-existing` to populate chunks and embeddings.
 
 ## urls.txt Format
 
