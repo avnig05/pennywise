@@ -25,6 +25,7 @@ def ingest_single_article(
     difficulty: Optional[str],
     update_existing: bool = False,
     auto_classify: bool = False,
+    no_embeddings: bool = False,
 ) -> dict:
     """
     Ingest a single article through the full pipeline.
@@ -134,7 +135,10 @@ def ingest_single_article(
             "category": category,
             "difficulty": difficulty,
         }).eq("id", article_id).execute()
-        supabase.table("article_chunks").delete().eq("article_id", article_id).execute()
+        if no_embeddings:
+            print("  Skipping chunk deletion (--no-embeddings)")
+        else:
+            supabase.table("article_chunks").delete().eq("article_id", article_id).execute()
     
     # Step 3: Generate summary
     print(f"  Generating summary...")
@@ -145,32 +149,35 @@ def ingest_single_article(
     except Exception as e:
         print(f"  ⚠ Summary failed: {e}")
     
-    # Step 4: Chunk and embed
-    print(f"  Chunking and embedding...")
-    try:
-        chunks = chunk_text(scraped.content)
-        chunk_rows = []
-        
-        for idx, chunk_content in enumerate(chunks):
-            try:
-                embedding = get_embedding(chunk_content)
-            except Exception as e:
-                print(f"  ⚠ Embedding failed for chunk {idx}: {e}")
-                embedding = None
+    # Step 4: Chunk and embed (optional)
+    if no_embeddings:
+        print("  Skipping chunking/embeddings (--no-embeddings)")
+    else:
+        print(f"  Chunking and embedding...")
+        try:
+            chunks = chunk_text(scraped.content)
+            chunk_rows = []
             
-            chunk_rows.append({
-                "article_id": article_id,
-                "chunk_index": idx,
-                "content": chunk_content,
-                "embedding": embedding,
-            })
-        
-        if chunk_rows:
-            supabase.table("article_chunks").insert(chunk_rows).execute()
-            result["chunks_created"] = len(chunk_rows)
-            print(f"  ✓ Created {len(chunk_rows)} chunks with embeddings")
-    except Exception as e:
-        print(f"  ⚠ Chunking failed: {e}")
+            for idx, chunk_content in enumerate(chunks):
+                try:
+                    embedding = get_embedding(chunk_content)
+                except Exception as e:
+                    print(f"  ⚠ Embedding failed for chunk {idx}: {e}")
+                    embedding = None
+                
+                chunk_rows.append({
+                    "article_id": article_id,
+                    "chunk_index": idx,
+                    "content": chunk_content,
+                    "embedding": embedding,
+                })
+            
+            if chunk_rows:
+                supabase.table("article_chunks").insert(chunk_rows).execute()
+                result["chunks_created"] = len(chunk_rows)
+                print(f"  ✓ Created {len(chunk_rows)} chunks with embeddings")
+        except Exception as e:
+            print(f"  ⚠ Chunking failed: {e}")
     
     result["success"] = True
     return result
@@ -239,6 +246,12 @@ def main():
         action="store_true",
         help="Use LLM to infer category and difficulty from article content (instead of defaults or file/CLI values)"
     )
+    parser.add_argument(
+        "--no-embeddings",
+        dest="no_embeddings",
+        action="store_true",
+        help="Skip chunking + embedding generation (saves Gemini quota). Also avoids deleting existing chunks on --update-existing."
+    )
     
     args = parser.parse_args()
     
@@ -286,6 +299,7 @@ def main():
             url_info["difficulty"],
             update_existing=args.update_existing,
             auto_classify=args.auto_classify,
+            no_embeddings=args.no_embeddings,
         )
         
         if result["success"]:
