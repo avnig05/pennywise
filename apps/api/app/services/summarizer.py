@@ -50,7 +50,8 @@ Formatting rules (must follow so the summary looks good on screen):
 - Start with one or two sentences that state the main idea or takeaway, then add paragraphs for each major section or theme in the article.
 - Each paragraph: 2–4 sentences. Be clear and direct but include enough detail to convey the point. Do not skip important sub-points.
 - Use line breaks to create breathing room—no wall of text. The summary should still feel scannable.
-- If the article has steps, tips, or a list of factors, include them (as short bullet-style lines with "• " or "- ", or as 2–3 short sentences).
+- Do NOT use Markdown. No headings, no bold/italics, no numbered lists, and no bullet points.
+- If the article has steps, tips, or a list of factors, include them as plain sentences (e.g., “Key factors include …, …, and ….”).
 - Avoid jargon; if a financial term is needed, briefly explain it in parentheses or in the next few words.
 
 Content rules—cover the article thoroughly:
@@ -158,6 +159,12 @@ def summarize_article(
 
     try:
         summary = _generate(prompt, temperature=temperature).strip()
+
+        # Safety: if the model still returns markdown-ish formatting, strip the most common markers.
+        # We keep newlines (paragraph breaks) intact.
+        summary = re.sub(r"^\s*#{1,6}\s+", "", summary, flags=re.M)  # headings
+        summary = summary.replace("**", "").replace("__", "").replace("*", "")
+        summary = re.sub(r"^\s*[-•]\s+", "", summary, flags=re.M)  # bullets
         
         if max_length and len(summary) > max_length:
             truncated = summary[:max_length]
