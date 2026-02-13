@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import ChatButton from "@/components/ChatButton";
 import ProgressBar from "@/components/ProgressBar";
 import RecommendedArticles from "./RecommendedArticles";
@@ -37,9 +36,7 @@ export default function Dashboard() {
 
         <div className="mt-10">
           <h3 className="text-lg font-semibold text-gray-900">Recommended for You</h3>
-          <Suspense fallback={<RecommendedSkeleton />}>
-            <RecommendedArticles />
-          </Suspense>
+          <RecommendedArticles />
         </div>
       </section>
       <ChatButton />

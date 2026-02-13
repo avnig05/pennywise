@@ -33,6 +33,11 @@ class ProfileUpdate(BaseModel):
     emergency_buffer_range: Optional[Literal["zero", "lt_500", "500_2000", "gt_2000"]] = None
     priority: Optional[Literal["save", "credit", "debt", "unsure"]] = None
     interests: Optional[List[str]] = None
+    saved_articles: Optional[List[str]] = None
+
+
+class ToggleSavedBody(BaseModel):
+    article_id: str
 
 
 @router.get("")
@@ -52,8 +57,6 @@ async def put_me(update: ProfileUpdate, user_id: str = Depends(get_current_user_
         resp = supabase.table("profiles").upsert(payload, on_conflict="user_id").execute()
         rows = resp.data or []
         invalidate_recommendations_cache(user_id)
-        # Compute personalized recommendations before responding so dashboard shows them immediately
-        get_recommended_articles(user_id, 20)
         return rows[0] if rows else payload
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {e}")
@@ -76,3 +79,22 @@ async def get_my_tip(user_id: str = Depends(get_current_user_id)):
     if not tip:
         raise HTTPException(status_code=404, detail="Unable to generate tip. Complete your profile.")
     return tip
+@router.post("/saved/toggle")
+async def toggle_saved_article(
+    body: ToggleSavedBody, user_id: str = Depends(get_current_user_id)
+):
+    """Add or remove an article from the user's saved list. Returns the updated list."""
+    resp = supabase.table("profiles").select("saved_articles").eq("user_id", user_id).execute()
+    rows = resp.data or []
+    if not rows:
+        raise HTTPException(status_code=404, detail="Profile not found. Complete onboarding.")
+    current = list(rows[0].get("saved_articles") or [])
+    if body.article_id in current:
+        current = [a for a in current if a != body.article_id]
+    else:
+        current = current + [body.article_id]
+    try:
+        supabase.table("profiles").update({"saved_articles": current}).eq("user_id", user_id).execute()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update saved articles: {e}")
+    return {"saved_articles": current}

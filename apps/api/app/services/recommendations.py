@@ -143,11 +143,12 @@ def get_recommended_article_ids(
         log.warning("Recommendations: no candidate articles (ingest articles first)")
         return []
 
-    if len(articles_payload) <= top_n:
+    if len(articles_payload) <= TOP_N:
         return [a["id"] for a in articles_payload[:top_n]]
 
     profile_json = json.dumps(profile, separators=(",", ":"))
     articles_json = json.dumps(articles_payload, separators=(",", ":"))
+    log.info("Recommendations: calling LLM for user_id=%s with %s candidates (profile keys: %s)", user_id, len(articles_payload), list(profile.keys()))
 
     prompt = RECOMMENDATION_PROMPT_TEMPLATE.format(
         top_n=top_n,
@@ -278,13 +279,15 @@ def get_recommended_articles(
             return ordered
         # Cache had stale/invalid IDs; fall through to recompute
 
-    # 2. Compute via LLM (slow path)
-    top_ids = get_recommended_article_ids(user_id, top_n=top_n)
+    # 2. Compute via LLM (slow path); siempre pedimos y cacheamos solo TOP_N (5) para el feed
+    requested = min(top_n, TOP_N) if top_n else TOP_N
+    top_ids = get_recommended_article_ids(user_id, top_n=requested)
     if not top_ids:
         return []
 
-    # 3. Save to cache for next time
-    _set_cached_recommendation_ids(user_id, top_ids)
+    # 3. Guardar en caché solo los 5 (igual que antes), para que no se guarden 16/20
+    ids_to_cache = top_ids[:TOP_N]
+    _set_cached_recommendation_ids(user_id, ids_to_cache)
 
     # 4. Fetch and return full article rows in order
     return _articles_by_ids(top_ids)

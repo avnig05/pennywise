@@ -61,6 +61,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Redirect users who already completed onboarding away from onboarding page
+  if (pathname.startsWith('/onboarding') && isAuth) {
+    const onboardingComplete = request.cookies.get('onboarding-complete');
+    if (onboardingComplete?.value === 'true') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  }
+
   return NextResponse.next();
 }
 

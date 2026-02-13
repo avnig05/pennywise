@@ -50,7 +50,8 @@ export default function SignUpForm() {
         // Small delay to ensure cookies are set
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        router.replace('/onboarding');
+        // Force full page reload so global providers (e.g. bookmarks) refetch user data
+        window.location.href = '/onboarding';
       } else {
         // Email confirmation required - show message
         setError("Please check your email to confirm your account before continuing.");
@@ -58,10 +59,9 @@ export default function SignUpForm() {
       }
     } catch (error) {
       console.error("Signup error:", error);
-      // Dev mode fallback
-      document.cookie = `sb-access-token=dev_${Date.now()}; path=/; max-age=${60 * 60 * 24 * 7}`;
-      document.cookie = `onboarding-complete=false; path=/; max-age=${60 * 60 * 24 * 30}`;
-      router.replace('/onboarding');
+      setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 

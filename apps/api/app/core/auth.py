@@ -53,7 +53,6 @@ async def get_current_user_id(
     Tries multiple sources in order:
     1. Authorization header (Bearer token)
     2. sb-access-token cookie
-    3. Dev mode fallback (checks for dev_ prefix in cookie)
     
     Args:
         request: FastAPI request object
@@ -74,12 +73,6 @@ async def get_current_user_id(
     
     # 2. Try cookie (fallback for web apps)
     elif sb_access_token:
-        # Check if it's a dev token (starts with "dev_")
-        if sb_access_token.startswith("dev_"):
-            # Dev mode: extract timestamp and use a test user ID
-            # This allows development without real Supabase auth
-            return "00000000-0000-0000-0000-000000000000"  # Test user ID
-        
         token = sb_access_token
     
     if not token:

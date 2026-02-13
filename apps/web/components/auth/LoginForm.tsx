@@ -41,12 +41,13 @@ export default function LoginForm() {
       
       // Check if there's a redirect URL from protected route
       const redirectTo = searchParams.get('redirect') || '/dashboard';
-      router.replace(redirectTo);
+      // Force full page reload so global providers (e.g. bookmarks) refetch user data
+      window.location.href = redirectTo;
     } catch (err) {
       console.error("Login error:", err);
-      // Dev mode fallback
-      document.cookie = `sb-access-token=dev_${Date.now()}; path=/; max-age=${60 * 60 * 24 * 7}`;
-      router.replace('/dashboard');
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 

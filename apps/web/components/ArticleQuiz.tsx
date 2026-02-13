@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
 import {
   getArticleQuiz,
   submitQuizAnswers,
@@ -206,11 +207,26 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
         {/* Completed header - scroll target after submit */}
         <div
           ref={resultSectionRef}
-          className="rounded-2xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-8 shadow-sm"
+          className="relative rounded-2xl border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-8 shadow-sm"
         >
+          <Link
+            href="/dashboard"
+            className="absolute left-6 top-6 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to dashboard
+          </Link>
           <div className="text-center">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle2 className="h-12 w-12 text-green-600" />
+            <div
+              className={`mx-auto flex h-20 w-20 items-center justify-center rounded-full text-5xl ${
+                score >= 70
+                  ? "bg-green-100"
+                  : score >= 50
+                  ? "bg-yellow-100"
+                  : "bg-red-100"
+              }`}
+            >
+              {score >= 90 ? "🤩" : score >= 65 ? "😊" : score >= 40 ? "😐" : "😢"}
             </div>
             <div className="mt-6 inline-flex items-center gap-2 rounded-full border-2 border-green-300 bg-green-100 px-4 py-2">
               <span className="text-sm font-semibold uppercase tracking-wide text-green-800">
@@ -220,13 +236,49 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
             <h2 className="mt-4 text-2xl font-semibold text-gray-900">Quiz completed</h2>
             <p className="mt-3 text-lg text-gray-700">
               Your score:{" "}
-              <span className="font-bold text-green-700">{score}%</span>
+              <span
+                className={`font-bold ${
+                  score >= 90
+                    ? "text-green-800"
+                    : score >= 70
+                    ? "text-green-700"
+                    : score >= 50
+                    ? "text-yellow-700"
+                    : "text-red-700"
+                }`}
+              >
+                {score}%
+              </span>
             </p>
             <p className="mt-2 text-sm text-gray-600">
-              {score >= 70
-                ? "Great job — you understand the material well."
+              {score >= 90
+                ? "Amazing work, you really mastered this!"
+                : score >= 65
+                ? "Great job, you understand the material well."
+                : score >= 40
+                ? "Not bad! Consider reviewing some sections to improve."
                 : "Consider reviewing the article to improve your understanding."}
             </p>
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={handleRegenerateQuiz}
+                disabled={regenerating}
+                className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-sage)] px-5 py-3 text-sm font-medium text-white shadow-sm transition hover:opacity-90 disabled:opacity-50"
+              >
+                {regenerating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="h-4 w-4" />
+                    Regenerate quiz
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -335,6 +387,17 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
             </button>
           </div>
         </div>
+
+        {/* Back to dashboard at the end of the quiz */}
+        <div className="mt-4 flex justify-start">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back to dashboard</span>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -422,6 +485,17 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
           </p>
         </div>
       )}
+
+      {/* Back to dashboard at the end of the quiz */}
+      <div className="mt-8 flex justify-start">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to dashboard</span>
+        </Link>
+      </div>
     </div>
   );
 }
