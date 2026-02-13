@@ -1,21 +1,28 @@
 """
 Summarizer service for financial education articles.
-Uses Google Gemini via LangChain to create concise, educational summaries.
+Uses either Google Gemini or a local Ollama model to create concise, educational summaries.
 Also provides LLM-based classification for category and difficulty.
 """
 
+import json
 import re
 from typing import Optional, Tuple
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+import httpx
 
-from app.core.config import GEMINI_API_KEY, require_env
+from app.core.config import AI_PROVIDER, GEMINI_API_KEY, OLLAMA_BASE_URL, OLLAMA_MODEL, require_env
 from app.services.scraper import ScrapedArticle
 
 # Valid values for classification (must match app.models.article)
 CATEGORIES = [
-    "budgeting", "investing", "credit cards", "credit score",
-    "student loans", "debt management", "taxes", "savings",
+    "budgeting",
+    "investing",
+    "credit_cards",
+    "building_credit",
+    "student_loans",
+    "debt_management",
+    "taxes",
+    "savings",
 ]
 DIFFICULTIES = ["beginner", "intermediate", "advanced"]
 
@@ -67,24 +74,54 @@ Article Content:
 Write a thorough, well-formatted summary that covers a good amount of the article and is easy to read. Use blank lines between paragraphs:"""
 
 
-def create_summarizer_llm(temperature: float = 0.3) -> ChatGoogleGenerativeAI:
+def _effective_provider() -> str:
     """
-    Create a configured Google Gemini LLM instance for summarization.
-    
-    Args:
-        temperature: Controls randomness (0.0 = deterministic, 1.0 = creative)
-                    Lower values (0.2-0.4) work better for factual summarization
-        
-    Returns:
-        Configured ChatGoogleGenerativeAI instance
+    Choose provider:
+    - if AI_PROVIDER set, use it
+    - else: gemini if key present, otherwise ollama
     """
+    if AI_PROVIDER:
+        return AI_PROVIDER
+    return "gemini" if GEMINI_API_KEY else "ollama"
+
+
+def _generate_with_ollama(prompt: str, temperature: float) -> str:
+    payload = {
+        "model": OLLAMA_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": False,
+        "options": {"temperature": temperature},
+    }
+    with httpx.Client(timeout=180.0) as client:
+        r = client.post(f"{OLLAMA_BASE_URL}/api/chat", json=payload)
+        r.raise_for_status()
+        data = r.json()
+    return str(((data.get("message") or {}).get("content")) or "").strip()
+
+
+def _generate_with_gemini(prompt: str, temperature: float) -> str:
     api_key = require_env("GEMINI_API_KEY", GEMINI_API_KEY)
-    
-    return ChatGoogleGenerativeAI(
+    try:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+    except Exception as e:
+        raise RuntimeError(f"Gemini provider requires langchain-google-genai: {e}")
+
+    llm = ChatGoogleGenerativeAI(
         model="gemini-2.5-flash-lite",
         google_api_key=api_key,
         temperature=temperature,
     )
+    response = llm.invoke(prompt)
+    return (response.content if hasattr(response, "content") else str(response)).strip()
+
+
+def _generate(prompt: str, temperature: float) -> str:
+    provider = _effective_provider()
+    if provider == "ollama":
+        return _generate_with_ollama(prompt, temperature=temperature)
+    if provider == "gemini":
+        return _generate_with_gemini(prompt, temperature=temperature)
+    raise RuntimeError(f"Unsupported AI_PROVIDER: {provider} (expected 'ollama' or 'gemini')")
 
 
 def summarize_article(
@@ -118,14 +155,9 @@ def summarize_article(
         date_info=date_info,
         content=article.content,
     )
-    
-    # Initialize LLM and generate summary
-    llm = create_summarizer_llm(temperature=temperature)
-    
+
     try:
-        response = llm.invoke(prompt)
-        summary = response.content if hasattr(response, 'content') else str(response)
-        summary = summary.strip()
+        summary = _generate(prompt, temperature=temperature).strip()
         
         if max_length and len(summary) > max_length:
             truncated = summary[:max_length]
@@ -203,19 +235,35 @@ def classify_article(
         title=article.title or "Untitled",
         content_excerpt=excerpt,
     )
-    llm = create_summarizer_llm(temperature=temperature)
-    try:
-        response = llm.invoke(prompt)
-    except Exception as e:
-        # If classification completely fails, fall back to safe defaults
-        raise Exception(f"Failed to classify article: {e}")
+    raw = _generate(prompt, temperature=temperature).strip()
 
-    # LangChain can return content as str or list of blocks
-    content = response.content if hasattr(response, "content") else str(response)
-    if isinstance(content, list):
-        raw = " ".join(
-            (c.get("text", "") if isinstance(c, dict) else str(c) for c in content)
-        )
+    # Extract JSON blob if the model wrapped it in extra text/code blocks
+    start = raw.find("{")
+    if start != -1:
+        depth = 0
+        for i in range(start, len(raw)):
+            if raw[i] == "{":
+                depth += 1
+            elif raw[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    raw = raw[start : i + 1]
+                    break
+
+    data = None
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        try:
+            data = json.loads(raw.replace("'", '"'))
+        except json.JSONDecodeError:
+            data = None
+
+    if not isinstance(data, dict):
+        cat_match = re.search(r'["\']category["\']\s*:\s*["\']([^"\']+)["\']', raw, re.I)
+        diff_match = re.search(r'["\']difficulty["\']\s*:\s*["\']([^"\']+)["\']', raw, re.I)
+        category = (cat_match.group(1).strip().lower() if cat_match else "budgeting")
+        difficulty = (diff_match.group(1).strip().lower() if diff_match else "beginner")
     else:
         raw = str(content)
     raw = raw.strip()

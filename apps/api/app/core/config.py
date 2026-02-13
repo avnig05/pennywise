@@ -12,9 +12,24 @@ SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
 DEV_USER_ID = os.getenv("DEV_USER_ID", "")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+
+# AI provider selection:
+# - set AI_PROVIDER explicitly to "ollama" or "gemini"
+# - if empty, code may auto-select based on available keys
+AI_PROVIDER = os.getenv("AI_PROVIDER", "").strip().lower()
+
+# Ollama settings (used when AI_PROVIDER=ollama)
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").strip()
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1").strip()
+OLLAMA_EMBED_MODEL = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text").strip()
+
+# Embedding dimensionality expected by DB schema. Set to 0 to disable check.
+EMBEDDING_DIMENSIONS = int(os.getenv("EMBEDDING_DIMENSIONS", "768"))
+
 # How long to reuse cached recommendations before recomputing (seconds). Default 24h.
 RECOMMENDATIONS_CACHE_TTL_SECONDS = int(os.getenv("RECOMMENDATIONS_CACHE_TTL_SECONDS", "86400"))
 print(f"GEMINI_API_KEY loaded: {'Yes' if GEMINI_API_KEY else 'No (empty)'}")
+print(f"AI_PROVIDER: {AI_PROVIDER or '(auto)'}")
 
 def require_env(name: str, value: str) -> str:
     if not value:
