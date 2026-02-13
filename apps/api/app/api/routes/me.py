@@ -56,8 +56,6 @@ async def put_me(update: ProfileUpdate, user_id: str = Depends(get_current_user_
         resp = supabase.table("profiles").upsert(payload, on_conflict="user_id").execute()
         rows = resp.data or []
         invalidate_recommendations_cache(user_id)
-        # Compute personalized recommendations before responding so dashboard shows them immediately
-        get_recommended_articles(user_id, 20)
         return rows[0] if rows else payload
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update profile: {e}")
