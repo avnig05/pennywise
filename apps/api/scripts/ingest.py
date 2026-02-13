@@ -26,11 +26,13 @@ def ingest_single_article(
     update_existing: bool = False,
     auto_classify: bool = False,
     no_embeddings: bool = False,
+    chunks_only: bool = False,
 ) -> dict:
     """
     Ingest a single article through the full pipeline.
     If update_existing is True and the article already exists (same source_url), update it and re-run summary/chunks.
     If auto_classify is True, category and difficulty are inferred from content via LLM (overrides provided values).
+    If chunks_only is True, skip classification and summary; only chunk and embed (use existing or file category/difficulty).
     Returns:
         dict with results or error info
     """
@@ -63,10 +65,14 @@ def ingest_single_article(
     if existing_row:
         result["title"] = existing_row.get("title")
         if not update_existing:
-            print("  ✓ Already in database (skipping scrape; use --update-existing to refresh)")
+            print("  ✓ Already in database (skipping scrape and chunks; use --update-existing to regenerate chunks/embeddings)")
             result["success"] = True
             return result
 
+        # Use stored content and, for chunks_only, use existing category/difficulty from DB
+        if chunks_only:
+            category = existing_row.get("category") or category
+            difficulty = existing_row.get("difficulty") or difficulty
         scraped = ScrapedArticle(
             url=url,
             title=existing_row.get("title") or "Untitled",
@@ -85,14 +91,17 @@ def ingest_single_article(
         result["title"] = scraped.title
         print(f"  ✓ Scraped: {scraped.title}")
     
-    # Step 1b: Require category/difficulty unless auto_classify
-    if not auto_classify:
+    # Step 1b: Require category/difficulty unless auto_classify or chunks_only with existing article (already set from DB)
+    if not auto_classify and not chunks_only:
         if not category or not difficulty:
             result["error"] = "category and difficulty are required (provide via file as url,category,difficulty or use --category/--difficulty, or use --auto-classify)"
             return result
+    if chunks_only and not existing_row and (not category or not difficulty):
+        result["error"] = "category and difficulty are required for new URLs when using --chunks-only (add url,category,difficulty per line in the file, or use --category and --difficulty for the whole file)"
+        return result
 
-    # Optionally classify from content (so we get varied category/difficulty per article)
-    if auto_classify:
+    # Optionally classify from content (skip when chunks_only)
+    if auto_classify and not chunks_only:
         print(f"  Classifying category and difficulty...")
         try:
             category, difficulty = classify_article(scraped)
@@ -140,15 +149,16 @@ def ingest_single_article(
         else:
             supabase.table("article_chunks").delete().eq("article_id", article_id).execute()
     
-    # Step 3: Generate summary
-    print(f"  Generating summary...")
-    try:
-        summary = summarize_article(scraped)
-        supabase.table("articles").update({"summary": summary}).eq("id", article_id).execute()
-        print(f"  ✓ Summary generated")
-    except Exception as e:
-        print(f"  ⚠ Summary failed: {e}")
-    
+    # Step 3: Generate summary (skip when chunks_only)
+    if not chunks_only:
+        print(f"  Generating summary...")
+        try:
+            summary = summarize_article(scraped)
+            supabase.table("articles").update({"summary": summary}).eq("id", article_id).execute()
+            print(f"  ✓ Summary generated")
+        except Exception as e:
+            print(f"  ⚠ Summary failed: {e}")
+
     # Step 4: Chunk and embed (optional)
     if no_embeddings:
         print("  Skipping chunking/embeddings (--no-embeddings)")
@@ -252,7 +262,11 @@ def main():
         action="store_true",
         help="Skip chunking + embedding generation (saves Gemini quota). Also avoids deleting existing chunks on --update-existing."
     )
-    
+    parser.add_argument(
+        "--chunks-only",
+        action="store_true",
+        help="Skip classification and summary; only chunk and embed. Use with --update-existing to regenerate chunks for existing articles (no LLM calls)."
+    )
     args = parser.parse_args()
     
     print("=" * 60)
@@ -273,8 +287,14 @@ def main():
         print("No URLs to process")
         sys.exit(0)
 
-    # Require category and difficulty for every item when not using --auto-classify
-    if not args.auto_classify:
+    # With --chunks-only, --category and --difficulty apply to the whole file (for URLs that don't have them)
+    if args.chunks_only and args.category and args.difficulty:
+        for u in urls:
+            u["category"] = u.get("category") or args.category
+            u["difficulty"] = u.get("difficulty") or args.difficulty
+
+    # Require category and difficulty when not using --auto-classify (except --chunks-only + --update-existing: we get them from DB for existing URLs)
+    if not args.auto_classify and not (args.chunks_only and args.update_existing):
         missing = [
             (i + 1, u["url"]) for i, u in enumerate(urls)
             if not u.get("category") or not u.get("difficulty")
@@ -282,6 +302,7 @@ def main():
         if missing:
             print("Error: category and difficulty are required when not using --auto-classify.")
             print("Either use --auto-classify, or provide url,category,difficulty per line in the file, or use -u URL -c CATEGORY -d DIFFICULTY for a single URL.")
+            print("With --chunks-only you can pass --category and --difficulty once to apply to all URLs in the file (e.g. --chunks-only --update-existing -c investing -d beginner for urls_interest.txt).")
             for idx, u in missing:
                 print(f"  Missing for [{idx}]: {u}")
             sys.exit(1)
@@ -300,6 +321,7 @@ def main():
             update_existing=args.update_existing,
             auto_classify=args.auto_classify,
             no_embeddings=args.no_embeddings,
+            chunks_only=args.chunks_only,
         )
         
         if result["success"]:
@@ -308,7 +330,7 @@ def main():
         else:
             results["failed"].append(result)
             print(f"  ✗ Failed: {result['error']}\n")
-    
+
     # Summary
     print("=" * 60)
     print("Summary")
