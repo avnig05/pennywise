@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import ChatButton from "@/components/ChatButton";
 import ProgressBar from "@/components/ProgressBar";
 import RecommendedArticles from "./RecommendedArticles";

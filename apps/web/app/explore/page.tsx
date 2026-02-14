@@ -4,8 +4,10 @@ import CategoryBadge from "@/components/CategoryBadge";
 import ChatButton from "@/components/ChatButton";
 import { listArticles, listArticleToArticle } from "@/lib/api/articles";
 import type { Article } from "@/types";
-import { Search, X } from "lucide-react";
+import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
+
+const ARTICLES_PER_PAGE = 8;
 
 const CATEGORY_OPTIONS: Array<{ value: string; label: string }> = [
   { value: "budgeting", label: "Budgeting" },
@@ -32,6 +34,7 @@ export default function ExplorePage() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const toggle = (c: string) => {
     setSelectedCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
@@ -81,6 +84,16 @@ export default function ExplorePage() {
       return haystack.includes(q);
     });
   }, [articles, query, selectedCategories]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ARTICLES_PER_PAGE));
+  const paginatedArticles = useMemo(() => {
+    const start = (page - 1) * ARTICLES_PER_PAGE;
+    return filtered.slice(start, start + ARTICLES_PER_PAGE);
+  }, [filtered, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [categoryParam, difficultyParam, query]);
 
   const clearFilters = () => {
     setSelectedCategories([]);
@@ -155,11 +168,40 @@ export default function ExplorePage() {
           ) : filtered.length === 0 ? (
             <div className="rounded-2xl border bg-white p-6 text-gray-700">No matching articles.</div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
-              {filtered.map((article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+                {paginatedArticles.map((article) => (
+                  <ArticleCard key={article.id} article={article} />
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1}
+                    className="inline-flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-50"
+                    aria-label="Previous page"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </button>
+                  <span className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
+                    Page {page} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={page >= totalPages}
+                    className="inline-flex items-center gap-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:pointer-events-none disabled:opacity-50"
+                    aria-label="Next page"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from "react";
 import ArticleCard from "@/components/ArticleCard";
-import { getFeed, feedArticleToArticle } from "@/lib/api/feed";
+import { getFeed, getCachedFeed, feedArticleToArticle } from "@/lib/api/feed";
 import type { Article } from "@/types";
 import RecommendedSkeleton from "./RecommendedSkeleton";
 
+function getInitialArticles(): Article[] {
+  const cached = getCachedFeed(5);
+  return cached ? cached.articles.map(feedArticleToArticle) : [];
+}
+
 export default function RecommendedArticles() {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [articles, setArticles] = useState<Article[]>(getInitialArticles);
+  const [loading, setLoading] = useState(() => !getCachedFeed(5));
 
   useEffect(() => {
     let cancelled = false;
@@ -20,7 +25,7 @@ export default function RecommendedArticles() {
       })
       .catch(() => {
         if (!cancelled) {
-          setArticles([]);
+          setArticles((prev) => (prev.length > 0 ? prev : []));
         }
       })
       .finally(() => {
