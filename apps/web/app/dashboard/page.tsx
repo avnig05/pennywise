@@ -1,8 +1,8 @@
 import ChatButton from "@/components/ChatButton";
-import ProgressBar from "@/components/ProgressBar";
+import LearningStats from "@/components/LearningStats";
 import RecommendedArticles from "./RecommendedArticles";
-import RecommendedSkeleton from "./RecommendedSkeleton";
 import TipOfTheDay from "./TipOfTheDay";
+import { Suspense } from "react";
 
 export default function Dashboard() {
   return (
@@ -23,16 +23,7 @@ export default function Dashboard() {
           <TipOfTheDay />
         </Suspense>
 
-        <div className="mt-8 rounded-2xl border bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900">Your Learning Progress</h2>
-          <p className="mt-1 text-sm text-gray-700">Progress will appear once tracking is enabled.</p>
-          <div className="mt-6 space-y-5">
-            <ProgressBar label="Student Loans" percent={0} />
-            <ProgressBar label="Credit Cards" percent={0} />
-            <ProgressBar label="Budgeting" percent={0} />
-            <ProgressBar label="Building Credit" percent={0} />
-          </div>
-        </div>
+        <LearningStats />
 
         <div className="mt-10">
           <h3 className="text-lg font-semibold text-gray-900">Recommended for You</h3>

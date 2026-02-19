@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, Bookmark, User2, LogOut } from "lucide-react";
+import { Home, Compass, Bookmark, Trophy, User2, LogOut } from "lucide-react";
 import { logout } from "@/lib/auth";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/saved", label: "Saved", icon: Bookmark },
+  { href: "/achievements", label: "Achievements", icon: Trophy },
   { href: "/profile", label: "Profile", icon: User2 }
 ];
 
