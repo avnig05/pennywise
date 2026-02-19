@@ -2,18 +2,15 @@
 
 import { useEffect, useState } from "react";
 import ArticleCard from "@/components/ArticleCard";
-import { getFeed, getCachedFeed, feedArticleToArticle } from "@/lib/api/feed";
+import { getFeed, feedArticleToArticle } from "@/lib/api/feed";
 import type { Article } from "@/types";
 import RecommendedSkeleton from "./RecommendedSkeleton";
 
-function getInitialArticles(): Article[] {
-  const cached = getCachedFeed(5);
-  return cached ? cached.articles.map(feedArticleToArticle) : [];
-}
-
+// State must not depend on sessionStorage/cache so server and client render the same (skeleton) first.
+const INITIAL_ARTICLES: Article[] = [];
 export default function RecommendedArticles() {
-  const [articles, setArticles] = useState<Article[]>(getInitialArticles);
-  const [loading, setLoading] = useState(() => !getCachedFeed(5));
+  const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
