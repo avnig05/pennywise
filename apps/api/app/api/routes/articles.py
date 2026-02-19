@@ -27,6 +27,8 @@ CategoryType = Literal[
     "debt_management",
     "taxes",
     "savings",
+    "banking",
+    "credit_score",
 ]
 
 DifficultyType = Literal["beginner", "intermediate", "advanced"]

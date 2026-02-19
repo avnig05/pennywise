@@ -15,12 +15,12 @@ from app.services.scraper import ScrapedArticle
 # Valid values for classification (must match app.models.article)
 CATEGORIES = [
     "budgeting", "investing", "credit cards", "credit score",
-    "student loans", "debt management", "taxes", "savings",
+    "student loans", "debt management", "taxes", "savings", "banking",
 ]
 DIFFICULTIES = ["beginner", "intermediate", "advanced"]
 
 CLASSIFY_PROMPT_TEMPLATE = """You are classifying a financial education article. Based on the title and content below, choose exactly one category and one difficulty.
-Categories (pick one): budgeting, investing, credit cards, credit score, student loans, debt management, taxes, savings
+Categories (pick one): budgeting, investing, credit cards, credit score, student loans, debt management, taxes, savings, banking
 Difficulty (pick one): beginner = introductory/basic, intermediate = some finance knowledge, advanced = assumes familiarity or specialized terms
 Respond with exactly these two lines, nothing else:
 Category: <one word from the list above, e.g. credit cards>

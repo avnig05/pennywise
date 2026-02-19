@@ -100,16 +100,17 @@ async def toggle_saved_article(
     return {"saved_articles": current}
 
 
-# Learning progress: all article categories (key = DB category, label = display)
+# Learning progress: categories that have articles (key = DB category, label = display)
 LEARNING_PROGRESS_CATEGORIES = [
-    ("budgeting", "Budgeting"),
-    ("investing", "Investing"),
-    ("credit_cards", "Credit Cards"),
-    ("building_credit", "Building Credit"),
-    ("student_loans", "Student Loans"),
-    ("debt_management", "Debt Management"),
-    ("taxes", "Taxes"),
     ("savings", "Savings"),
+    ("budgeting", "Budgeting"),
+    ("taxes", "Taxes"),
+    ("investing", "Investing"),
+    ("debt_management", "Debt Management"),
+    ("banking", "Banking"),
+    ("student_loans", "Student Loans"),
+    ("credit_cards", "Credit Cards"),
+    ("credit_score", "Credit Score"),
 ]
 
 

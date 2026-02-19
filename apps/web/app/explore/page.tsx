@@ -10,14 +10,15 @@ import React, { useEffect, useMemo, useState } from "react";
 const ARTICLES_PER_PAGE = 8;
 
 const CATEGORY_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "budgeting", label: "Budgeting" },
-  { value: "investing", label: "Investing" },
-  { value: "credit_cards", label: "Credit cards" },
-  { value: "building_credit", label: "Building credit" },
-  { value: "student_loans", label: "Student loans" },
-  { value: "debt_management", label: "Debt management" },
-  { value: "taxes", label: "Taxes" },
   { value: "savings", label: "Savings" },
+  { value: "budgeting", label: "Budgeting" },
+  { value: "taxes", label: "Taxes" },
+  { value: "investing", label: "Investing" },
+  { value: "debt_management", label: "Debt Management" },
+  { value: "banking", label: "Banking" },
+  { value: "student_loans", label: "Student Loans" },
+  { value: "credit_cards", label: "Credit Cards" },
+  { value: "credit_score", label: "Credit Score" },
 ];
 
 const DIFFICULTY_OPTIONS: Array<{ value: string; label: string }> = [

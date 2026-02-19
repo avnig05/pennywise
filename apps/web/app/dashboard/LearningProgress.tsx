@@ -5,14 +5,15 @@ import { getLearningProgress, type ProgressItem } from "@/lib/api/profile";
 import ProgressBar from "@/components/ProgressBar";
 
 const DEFAULT_ITEMS: ProgressItem[] = [
-  { category: "budgeting", label: "Budgeting", percent: 0 },
-  { category: "investing", label: "Investing", percent: 0 },
-  { category: "credit_cards", label: "Credit Cards", percent: 0 },
-  { category: "building_credit", label: "Building Credit", percent: 0 },
-  { category: "student_loans", label: "Student Loans", percent: 0 },
-  { category: "debt_management", label: "Debt Management", percent: 0 },
-  { category: "taxes", label: "Taxes", percent: 0 },
   { category: "savings", label: "Savings", percent: 0 },
+  { category: "budgeting", label: "Budgeting", percent: 0 },
+  { category: "taxes", label: "Taxes", percent: 0 },
+  { category: "investing", label: "Investing", percent: 0 },
+  { category: "debt_management", label: "Debt Management", percent: 0 },
+  { category: "banking", label: "Banking", percent: 0 },
+  { category: "student_loans", label: "Student Loans", percent: 0 },
+  { category: "credit_cards", label: "Credit Cards", percent: 0 },
+  { category: "credit_score", label: "Credit Score", percent: 0 },
 ];
 
 export default function LearningProgress() {
