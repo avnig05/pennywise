@@ -74,9 +74,12 @@ export default function ExplorePage() {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const hasCategoryFilter = selectedCategories.length > 0;
+    const norm = (s: string) => String(s).toLowerCase().replace(/\s+/g, "_").trim();
 
     return articles.filter((a) => {
-      const matchesCategories = !hasCategoryFilter || selectedCategories.includes(String(a.category));
+      const articleCat = norm(a.category ?? "");
+      const matchesCategories =
+        !hasCategoryFilter || selectedCategories.some((c) => norm(c) === articleCat);
       if (!matchesCategories) return false;
 
       if (!q) return true;

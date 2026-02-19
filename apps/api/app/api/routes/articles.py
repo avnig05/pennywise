@@ -213,7 +213,9 @@ def list_articles(
     )
     
     if category:
-        query = query.eq("category", category)
+        # Match both snake_case (e.g. debt_management) and space form (e.g. debt management) from DB
+        categories_match = [category, category.replace("_", " ")]
+        query = query.in_("category", categories_match)
     if difficulty:
         query = query.eq("difficulty", difficulty)
     
