@@ -1,47 +1,89 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export async function middleware(request: NextRequest) {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
-  const pathname = request.nextUrl.pathname;
+// Routes that require authentication
+const protectedRoutes = [
+  '/dashboard',
+  '/profile',
+  '/saved',
+  '/explore',
+  '/article',
+  '/onboarding', // Protect onboarding too
+];
 
-  try {
-    const res = await fetch(`${apiBase}/me`, { cache: "no-store" });
+// Routes that should redirect to dashboard if already logged in
+const authRoutes = [
+  '/login',
+  '/signin',
+  '/signup',
+];
 
-    // If user already has a profile, prevent visiting onboarding again.
-    if (pathname.startsWith("/onboarding")) {
-      if (res.ok) {
-        const url = request.nextUrl.clone();
-        url.pathname = "/dashboard";
-        url.searchParams.delete("from");
-        return NextResponse.redirect(url);
-      }
-      return NextResponse.next();
-    }
+function isAuthenticated(request: NextRequest): boolean {
+  // Check for Supabase access token in cookies
+  const token = request.cookies.get('sb-access-token');
+  return !!token && token.value.length > 0;
+}
 
-    // Protected routes: no profile yet -> force onboarding
-    if (res.status === 404) {
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  const isAuth = isAuthenticated(request);
+
+  // Check if current path is protected
+  const isProtectedRoute = protectedRoutes.some(route => 
+    pathname.startsWith(route)
+  );
+
+  // Check if current path is an auth page (login/signup)
+  const isAuthRoute = authRoutes.some(route => 
+    pathname.startsWith(route)
+  );
+
+  // Redirect unauthenticated users from protected routes to login
+  if (isProtectedRoute && !isAuth) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/login';
+    // Add a redirect param so we can send them back after login
+    url.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect authenticated users from auth pages to dashboard
+  if (isAuthRoute && isAuth) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect authenticated users from landing page to dashboard
+  if (pathname === '/' && isAuth) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect users who already completed onboarding away from onboarding page
+  if (pathname.startsWith('/onboarding') && isAuth) {
+    const onboardingComplete = request.cookies.get('onboarding-complete');
+    if (onboardingComplete?.value === 'true') {
       const url = request.nextUrl.clone();
-      url.pathname = "/onboarding";
-      // Helpful for debugging / future "return to" behavior
-      url.searchParams.set("from", pathname);
+      url.pathname = '/dashboard';
       return NextResponse.redirect(url);
     }
-  } catch {
-    // If the API is down/unreachable, don't block navigation.
-    // The page itself can surface the error in dev.
   }
 
   return NextResponse.next();
 }
 
+// Configure which routes the middleware runs on
 export const config = {
   matcher: [
-    "/onboarding/:path*",
-    "/dashboard/:path*",
-    "/profile/:path*",
-    "/explore/:path*",
-    "/saved/:path*",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
-

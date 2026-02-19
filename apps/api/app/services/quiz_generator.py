@@ -9,6 +9,9 @@ from typing import Optional
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 
+# Article IDs currently being generated (to avoid duplicate background tasks)
+_quiz_generation_in_progress: set[str] = set()
+
 from app.core.config import GEMINI_API_KEY, require_env
 from app.core.supabase_client import supabase
 
@@ -163,3 +166,24 @@ def generate_quiz_for_article(article_id: str, for_regenerate: bool = False) -> 
         return quiz_id
     except Exception:
         return None
+
+
+def is_quiz_generation_in_progress(article_id: str) -> bool:
+    """True if a background task is already generating a quiz for this article."""
+    return article_id in _quiz_generation_in_progress
+
+
+def mark_quiz_generation_started(article_id: str) -> None:
+    """Call before starting background generation."""
+    _quiz_generation_in_progress.add(article_id)
+
+
+def run_quiz_generation_and_clear(article_id: str, for_regenerate: bool = False) -> None:
+    """
+    Run quiz generation in background; always removes article_id from in-progress set when done.
+    Use this as the BackgroundTasks task so the route can return immediately.
+    """
+    try:
+        generate_quiz_for_article(article_id, for_regenerate=for_regenerate)
+    finally:
+        _quiz_generation_in_progress.discard(article_id)

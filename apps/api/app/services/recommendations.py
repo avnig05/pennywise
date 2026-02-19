@@ -6,9 +6,12 @@ Results are cached per user so the dashboard loads instantly after the first com
 """
 
 import json
+import logging
 import re
 from datetime import datetime, timezone
 from typing import Any, Optional
+
+log = logging.getLogger(__name__)
 
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -132,17 +135,20 @@ def get_recommended_article_ids(
     """
     profile = get_profile(user_id)
     if not profile:
+        log.warning("Recommendations: no profile for user_id=%s (user needs to complete onboarding)", user_id)
         return []
 
     articles_payload = get_articles_for_recommendation(limit=candidate_limit)
     if not articles_payload:
+        log.warning("Recommendations: no candidate articles (ingest articles first)")
         return []
 
-    if len(articles_payload) <= top_n:
+    if len(articles_payload) <= TOP_N:
         return [a["id"] for a in articles_payload[:top_n]]
 
     profile_json = json.dumps(profile, separators=(",", ":"))
     articles_json = json.dumps(articles_payload, separators=(",", ":"))
+    log.info("Recommendations: calling LLM for user_id=%s with %s candidates (profile keys: %s)", user_id, len(articles_payload), list(profile.keys()))
 
     prompt = RECOMMENDATION_PROMPT_TEMPLATE.format(
         top_n=top_n,
@@ -157,7 +163,8 @@ def get_recommended_article_ids(
         top_ids = _parse_top_ids_from_response(response_text, top_n)
         valid_ids = {a["id"] for a in articles_payload}
         return [i for i in top_ids if i in valid_ids][:top_n]
-    except Exception:
+    except Exception as e:
+        log.warning("Recommendations: LLM failed for user_id=%s: %s", user_id, e)
         return []
 
 
@@ -230,6 +237,31 @@ def _articles_by_ids(article_ids: list[str]) -> list[dict]:
     return [id_to_row[i] for i in article_ids if i in id_to_row]
 
 
+# Same columns as _articles_by_ids for consistent feed response shape
+_FEED_SELECT = "id, title, summary, category, difficulty, source_name, source_url, created_at"
+
+
+def get_recent_feed_articles(top_n: int) -> list[dict]:
+    """Return the latest N articles for instant fallback feed (no LLM). Same shape as cached feed."""
+    resp = (
+        supabase.table("articles")
+        .select(_FEED_SELECT)
+        .order("created_at", desc=True)
+        .limit(max(1, top_n))
+        .execute()
+    )
+    return resp.data or []
+
+
+def get_cached_feed(user_id: str, top_n: int) -> Optional[list[dict]]:
+    """Return cached recommended articles if available and valid; otherwise None."""
+    cached_ids = _get_cached_recommendation_ids(user_id)
+    if not cached_ids:
+        return None
+    ordered = _articles_by_ids(cached_ids[:top_n])
+    return ordered if ordered else None
+
+
 def get_recommended_articles(
     user_id: str,
     top_n: int = TOP_N,
@@ -247,13 +279,15 @@ def get_recommended_articles(
             return ordered
         # Cache had stale/invalid IDs; fall through to recompute
 
-    # 2. Compute via LLM (slow path)
-    top_ids = get_recommended_article_ids(user_id, top_n=top_n)
+    # 2. Compute via LLM (slow path); siempre pedimos y cacheamos solo TOP_N (5) para el feed
+    requested = min(top_n, TOP_N) if top_n else TOP_N
+    top_ids = get_recommended_article_ids(user_id, top_n=requested)
     if not top_ids:
         return []
 
-    # 3. Save to cache for next time
-    _set_cached_recommendation_ids(user_id, top_ids)
+    # 3. Guardar en caché solo los 5 (igual que antes), para que no se guarden 16/20
+    ids_to_cache = top_ids[:TOP_N]
+    _set_cached_recommendation_ids(user_id, ids_to_cache)
 
     # 4. Fetch and return full article rows in order
     return _articles_by_ids(top_ids)

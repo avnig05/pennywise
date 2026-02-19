@@ -1,22 +1,293 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #222222;
-  --color-cream: #ffffff;
-  --color-sage: #6B9080;
+  --bg-page: #f5f3ef;
+  --bg-card: #ffffff;
+  --bg-accent: #fef9f0;
+  --color-primary: #5a7c65;
+  --color-primary-light: #e8f0e8;
+  --color-primary-dark: #4a6b55;
+  --text-primary: #2c3e35;
+  --text-secondary: #6b7c73;
+  --text-light: #9ca89f;
+  --border-color: #e5e3df;
+  --input-border: #d4d2cd;
+  --border-radius: 12px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+  --background: var(--bg-page);
+  --foreground: var(--text-primary);
+  --color-cream: var(--bg-page);
+  --color-sage: var(--color-primary);
   --color-tip: #8B6914;
+  --color-primary-50: var(--color-primary-light);
+  --color-primary-100: var(--color-primary-light);
+  --color-primary-500: var(--color-primary);
+  --color-primary-600: var(--color-primary);
+  --color-accent-50: var(--bg-accent);
+  --color-accent-500: var(--bg-accent);
+  --color-accent-600: var(--bg-accent);
+  --color-text: var(--text-primary);
+  --color-text-light: var(--text-secondary);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--bg-page);
+  --color-foreground: var(--text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-sage-500: #6B8E7F;
+  --color-sage-600: #5A7A6E;
+  --color-primary-50: var(--color-primary-light);
+  --color-primary-100: var(--color-primary-light);
+  --color-primary-500: var(--color-primary);
+  --color-primary-600: var(--color-primary);
+  --color-accent-50: var(--bg-accent);
+  --color-accent-500: var(--bg-accent);
+  --color-accent-600: var(--bg-accent);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-page);
+  color: var(--text-primary);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  line-height: 1.65;
+}
+
+html, body {
+  overflow-x: hidden;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 0%; }
+}
+
+@keyframes floatPulse {
+  0% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.02); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes scrollBounce {
+  0% { transform: translateY(0); opacity: 1; }
+  60% { transform: translateY(8px); opacity: 0.6; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes caretBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: float-delayed 10s ease-in-out infinite;
+  animation-delay: 1s;
+}
+.animate-pulse-slow {
+  animation: pulse 6s ease-in-out infinite;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+@keyframes float-delayed {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(20px) rotate(-5deg); }
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.04); opacity: 0.6; }
+}
+
+.mesh-bg {
+  background:
+    radial-gradient(100% 80% at 20% 10%, #f7f5f1, transparent 60%),
+    radial-gradient(100% 80% at 80% 30%, #fbf7f2, transparent 60%),
+    linear-gradient(120deg, var(--bg-page), #faf6f1);
+  background-size: 200% 200%;
+  animation: gradientShift 28s ease-in-out infinite;
+}
+
+.scroll-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: #9ca3af;
+  animation: scrollBounce 1.2s ease-in-out infinite;
+}
+
+.caret {
+  display: inline-block;
+  margin-left: 0.25rem;
+  animation: caretBlink 1s steps(2, start) infinite;
+}
+
+/* Card and button system aligned to dashboard */
+.card {
+  background: var(--bg-card);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-soft);
+  padding: 24px;
+}
+.card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+  border: 1px solid var(--color-primary);
+}
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border-radius: 10px;
+  padding: 12px 24px;
+  border: none;
+  transition: all 0.3s ease;
+}
+.btn-primary:hover {
+  background: #3d6449;
+  transform: translateY(-2px);
+}
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  border-radius: 10px;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+}
+.btn-secondary:hover {
+  background: #f6fbf9;
+  transform: translateY(-2px);
+}
+
+@keyframes glowPulse {
+  0% { box-shadow: 0 0 0px 0 rgba(34, 197, 94, 0.0); }
+  50% { box-shadow: 0 0 24px 6px rgba(34, 197, 94, 0.25); }
+  100% { box-shadow: 0 0 0px 0 rgba(34, 197, 94, 0.0); }
+}
+
+@keyframes particleDrift {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  50%  { transform: translate(18px, -12px) scale(1.05); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-primary-100);
+  opacity: 0.45;
+  animation: particleDrift 12s ease-in-out infinite;
+  will-change: transform;
+}
+
+.particle:nth-child(1) { left: 6%;  top: 18%; animation-duration: 13s; }
+.particle:nth-child(2) { left: 12%; top: 42%; animation-duration: 11s; }
+.particle:nth-child(3) { left: 20%; top: 28%; animation-duration: 15s; background: var(--color-accent-50); }
+.particle:nth-child(4) { left: 28%; top: 12%; animation-duration: 10s; }
+.particle:nth-child(5) { left: 36%; top: 46%; animation-duration: 14s; background: var(--color-accent-50); }
+.particle:nth-child(6) { left: 48%; top: 24%; animation-duration: 12s; }
+.particle:nth-child(7) { left: 58%; top: 36%; animation-duration: 16s; }
+.particle:nth-child(8) { left: 66%; top: 14%; animation-duration: 13s; background: var(--color-accent-50); }
+.particle:nth-child(9) { left: 74%; top: 40%; animation-duration: 12s; }
+.particle:nth-child(10){ left: 82%; top: 22%; animation-duration: 15s; }
+.particle:nth-child(11){ left: 88%; top: 34%; animation-duration: 11s; background: var(--color-accent-50); }
+.particle:nth-child(12){ left: 92%; top: 16%; animation-duration: 14s; }
+
+@keyframes rippleAnim {
+  0% { transform: scale(0); opacity: 0.6; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.45);
+  transform: scale(0);
+  animation: rippleAnim 600ms ease-out forwards;
+  pointer-events: none;
+}
+
+/* Feature cards enhancements */
+.feature-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.feature-card {
+  position: relative;
+  overflow: hidden;
+}
+.feature-card::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  border-radius: 24px;
+  background: radial-gradient(closest-side, var(--card-glow, rgba(34,197,94,0.35)), transparent 70%);
+  opacity: 0;
+  transition: opacity 300ms ease-in-out;
+  filter: blur(24px);
+}
+.feature-card:hover::before {
+  opacity: 0.25;
+}
+
+@keyframes iconPulse {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.06) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.feature-card .icon-pulse {
+  animation: iconPulse 2.4s ease-in-out infinite;
+}
+
+/* How it works progress badges */
+.hiw-badge {
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.08));
+}
+
+/* Optional subtle noise overlay for cards */
+.noise-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 120 120'%3E%3Cg fill='%23000000'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3Ccircle cx='63' cy='63' r='1'/%3E%3Ccircle cx='33' cy='93' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@keyframes pageFadeIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-pageFadeIn {
+  animation: pageFadeIn 500ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .animate-pageFadeIn { animation: none; }
+  .mesh-bg { animation: none; }
+  .scroll-indicator-dot { animation: none; }
 }

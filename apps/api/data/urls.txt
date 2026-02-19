@@ -1,28 +1,56 @@
-# Article URLs for ingestion
-# Format: url (simple) or url,category,difficulty (with metadata)
-# Lines starting with # are ignored
-#
-# Categories: budgeting, investing, credit_cards, building_credit, 
-#             student_loans, debt_management, taxes, savings
-# Difficulty: beginner, intermediate, advanced
-
-# Example entries:
-# https://example.com/article-about-budgeting
-# https://example.com/credit-tips,credit_cards,beginner
-
-# Your URLs below:
-
-#Credit Score
+#How to build credit score
 https://www.consumerfinance.gov/ask-cfpb/what-is-a-credit-score-en-315/
 https://www.consumerfinance.gov/ask-cfpb/what-is-a-fico-score-en-1883/
 https://www.consumerfinance.gov/consumer-tools/credit-reports-and-scores/answers/key-terms/
-https://www.consumerfinance.gov/ask-cfpb/how-do-i-get-and-keep-a-good-credit-score-en-318/
-https://www.usa.gov/credit-score
-https://www.consumerfinance.gov/ask-cfpb/where-can-i-get-my-credit-scores-en-316/
+https://www.consumerfinance.gov/ask-cfpb/how-do-i-get-and-keep-a-good-credit-score-en-318/ 
+https://www.usa.gov/credit-score 
 
-#Student loans 
-https://financialaidtoolkit.ed.gov/tk/learn/repayment.jsp
+#Taxes 101
+https://www.irs.gov/individual-tax-filing
+https://www.irs.gov/how-to-file-your-taxes-step-by-step
+https://www.irs.gov/forms-instructions
+https://www.irs.gov/credits-and-deductions-for-individuals 
 
+#Navigating Student Loans
+https://financialaidtoolkit.ed.gov/tk/learn/repayment.jsp 
 
+#Understanding Credit Cards
+https://www.fdic.gov/consumer-resource-center/credit-cards
+https://www.nerdwallet.com/credit-cards/learn/student-credit-cards-101 
 
+#Budgeting Basics
+https://www.fdic.gov/consumer-resource-center/2022-02/save-organize-and-streamline-your-finances
+https://shrls.org/financial_literacy/index.php
+https://srfs.upenn.edu/financial-wellness/browse-topics/budgeting/popular-budgeting-strategies
+https://consumer.gov/your-money/making-budget
+https://www.valleyfirst.com/simple-advice/money/ways-to-stick-to-your-budget 
+
+#Saving & Emergency Funds
+https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/
+https://www.bankrate.com/banking/savings/starting-an-emergency-fund/#no-emergency-fund
+https://dfi.wa.gov/financial-education/information/importance-having-emergency-savings-account
+https://www.nerdwallet.com/banking/learn/emergency-fund-why-it-matters
+https://www.bankrate.com/banking/savings/where-to-keep-emergency-fund/
+
+#Paychecks & Understanding Income
+https://www.dol.gov/general/topic/wages
+https://taxes.ca.gov/income-tax/understanding-your-paycheck/
+https://consumer.gov/your-money/your-paycheck-explained
+https://www.adp.com/resources/articles-and-insights/articles/p/pay-stub.aspx 
+https://www.schwabmoneywise.com/teen/story/understand-your-paycheck 
+
+#Understanding Interest
+https://www.guidestone.org/Resources/Education/Articles/Investments/Understanding-Interest-Rates
+https://www.ccu.com/learn/banking-basics/what-are-interest-rates-and-how-do-they-work/
+https://smartasset.com/investing/understanding-the-7-types-of-interest-rate
+https://www.usbank.com/financialiq/invest-your-money/investment-strategies/how-do-interest-rates-affect-investments.html
+https://www.macatawabank.com/articles/2022/09/fed-interest-rate-changes-how-does-this-impact-your-personal-finances.html
+https://www.investopedia.com/articles/investing/082113/understanding-interest-rates-nominal-real-and-effective.asp
+
+#Intro to Bank Accounts
+https://www.bankrate.com/banking/types-of-bank-accounts/#right-for-me
+https://www.usnews.com/banking/articles/what-types-of-bank-accounts-are-there
+https://bettermoneyhabits.bankofamerica.com/en/personal-banking/checking-account-information
+https://finlit.yale.edu/saving/banking
+https://globalyouth.wharton.upenn.edu/articles/your-money/opening-a-bank-account-be-the-boss-of-your-own-money/
 
