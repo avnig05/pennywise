@@ -6,6 +6,13 @@ import { Article } from "@/types";
 import { useBookmarks } from "@/lib/bookmarks";
 import { getArticleCompletion } from "@/lib/api/quizzes";
 
+const MAX_DESCRIPTION_CHARS = 400;
+
+function truncateDescription(text: string, maxChars: number): string {
+  if (!text || text.length <= maxChars) return text;
+  return text.slice(0, maxChars).trim() + "...";
+}
+
 type Props = {
   article: Article;
 };

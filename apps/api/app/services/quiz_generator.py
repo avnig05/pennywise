@@ -15,7 +15,7 @@ _quiz_generation_in_progress: set[str] = set()
 from app.core.config import GEMINI_API_KEY, require_env
 from app.core.supabase_client import supabase
 
-
+#Prompt base
 QUIZ_PROMPT_TEMPLATE = """You are creating a quiz for a financial education article. Generate 5-7 multiple-choice questions (exactly 4 options each) that test understanding of the key concepts from the article.
 
 Requirements:
@@ -107,14 +107,9 @@ def _parse_quiz_from_response(text: str) -> Optional[list[dict]]:
             pass
     return None
 
-
+#Function to generate the quiz for the specific article
 def generate_quiz_for_article(article_id: str, for_regenerate: bool = False) -> Optional[str]:
-    """
-    Generate quiz questions for an article using LLM.
-    Creates quiz and questions in DB. Returns quiz_id if successful, None otherwise.
-    If for_regenerate is True, uses a different prompt and higher temperature so the
-    new questions are clearly different (different angles, formats, and concepts).
-    """
+    #Read the article(title, summary, content)
     resp = (
         supabase.table("articles")
         .select("id, title, summary, original_content")
@@ -146,9 +141,11 @@ def generate_quiz_for_article(article_id: str, for_regenerate: bool = False) -> 
     try:
         response = llm.invoke(prompt)
         response_text = response.content if hasattr(response, "content") else str(response)
+        #Parse quiz from response
         questions_data = _parse_quiz_from_response(response_text)
         if not questions_data:
             return None
+        #Insert in article_quizzes
         quiz_resp = supabase.table("article_quizzes").insert({"article_id": article_id}).execute()
         if not quiz_resp.data:
             return None
@@ -164,6 +161,7 @@ def generate_quiz_for_article(article_id: str, for_regenerate: bool = False) -> 
             for i, q in enumerate(questions_data)
         ]
         if question_rows:
+            #Insert quiz questions
             supabase.table("quiz_questions").insert(question_rows).execute()
         return quiz_id
     except Exception:

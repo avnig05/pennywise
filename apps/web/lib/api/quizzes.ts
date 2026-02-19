@@ -32,10 +32,12 @@ export interface ArticleCompletion {
   user_answers?: number[]; // User's selected answers (0-3 for each question)
 }
 
+//Return article quiz
 export async function getArticleQuiz(articleId: string): Promise<Quiz> {
   return apiFetch<Quiz>(`/quizzes/article/${articleId}`, { method: "GET" });
 }
 
+//Submit quiz answers
 export async function submitQuizAnswers(
   articleId: string,
   answers: number[]
@@ -45,7 +47,7 @@ export async function submitQuizAnswers(
     body: JSON.stringify({ answers }),
   });
 }
-
+//Check if user already completed the article quiz
 export async function getArticleCompletion(
   articleId: string
 ): Promise<ArticleCompletion | null> {

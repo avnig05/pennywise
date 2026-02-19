@@ -58,6 +58,7 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
       try {
         const completion = await getArticleCompletion(articleId);
         if (cancelled) return;
+        //If completed
         if (completion) {
           const data = await getArticleQuiz(articleId);
           if (cancelled) return;
@@ -73,6 +74,7 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
           setLoading(false);
           return;
         }
+        //If not completed:
         const data = await getArticleQuiz(articleId);
         if (cancelled) return;
         if (data.status === "generating" || (!data.quiz_id && data.questions.length === 0)) {
@@ -131,14 +133,18 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
     setAnswers(next);
   };
 
+  // Handles quiz submission: validates answers, sends to backend, and updates UI state
   const handleSubmit = async () => {
+    // Validate that all questions have been answered
     if (!quiz || answers.some((a) => a === -1)) {
       alert("Please answer all questions before submitting.");
       return;
     }
     try {
       setSubmitting(true);
+      // Send answers to API to calculate score and save completion
       const result = await submitQuizAnswers(articleId, answers);
+      // Update component state with results and mark as completed
       setScore(result.score);
       setSubmitted(true);
       setIsCompleted(true);
@@ -151,7 +157,7 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
       setSubmitting(false);
     }
   };
-
+  //Regenerate quiz feature
   const handleRegenerateQuiz = async () => {
     try {
       setRegenerating(true);
