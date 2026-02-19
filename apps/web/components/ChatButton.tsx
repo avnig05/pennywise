@@ -164,8 +164,8 @@ export default function ChatButton() {
               </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
-              <div className="w-64 shrink-0 border-r bg-gray-50 overflow-y-auto">
+            <div className="flex flex-1 overflow-hidden rounded-b-2xl">
+              <div className="w-64 shrink-0 overflow-y-auto rounded-bl-2xl border-r bg-gray-50">
                 <div className="p-3">
                   <h3 className="mb-2 text-xs font-semibold uppercase text-gray-500">Conversations</h3>
                   {loadingChats ? (
