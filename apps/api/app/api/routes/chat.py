@@ -28,6 +28,7 @@ class ChatResponse(BaseModel):
     reply: str
     sources: list[Source]
     chat_id: Optional[str] = None
+    steps: Optional[list[str]] = None
 
 
 class ChatListItem(BaseModel):
@@ -78,7 +79,7 @@ def ask(request: ChatRequest, user_id: str = Depends(get_current_user_id)):
     }).execute()
 
     try:
-        reply, sources = answer_with_rag(message)
+        reply, sources, steps = answer_with_rag(message)
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
@@ -96,6 +97,7 @@ def ask(request: ChatRequest, user_id: str = Depends(get_current_user_id)):
         reply=reply,
         sources=[Source(title=s["title"], source_url=s["source_url"], snippet=s["snippet"]) for s in sources],
         chat_id=chat_id,
+        steps=steps,
     )
 
 
