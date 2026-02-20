@@ -3,12 +3,13 @@ RAG chatbot: ask a question, get an answer. Chats are persisted per user.
 """
 
 from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
 from pydantic import BaseModel
 
 from app.core.auth import get_current_user_id
 from app.core.supabase_client import supabase
 from app.services.rag import answer_with_rag
+from app.services.summarizer import summarize_chat
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -28,6 +29,7 @@ class ChatResponse(BaseModel):
     reply: str
     sources: list[Source]
     chat_id: Optional[str] = None
+    steps: Optional[list[str]] = None
 
 
 class ChatListItem(BaseModel):
@@ -53,8 +55,32 @@ class ChatDetail(BaseModel):
     messages: list[Message]
 
 
+def _update_chat_title_background(chat_id: str) -> None:
+    """Background task: set chat title once after first exchange; never update again."""
+    try:
+        mr = (
+            supabase.table("chat_messages")
+            .select("role, content")
+            .eq("chat_id", chat_id)
+            .order("created_at", desc=False)
+            .execute()
+        )
+        messages = [{"role": m["role"], "content": m.get("content") or ""} for m in (mr.data or [])]
+        # Only set title after the first exchange (2 messages); leave it constant after that
+        if len(messages) != 2:
+            return
+        summary = summarize_chat(messages)
+        supabase.table("chats").update({"title": summary}).eq("id", chat_id).execute()
+    except Exception:
+        pass  # Keep current title on failure
+
+
 @router.post("/ask", response_model=ChatResponse)
-def ask(request: ChatRequest, user_id: str = Depends(get_current_user_id)):
+def ask(
+    request: ChatRequest,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
+):
     message = (request.message or "").strip()
     if not message:
         raise HTTPException(status_code=400, detail="message is required")
@@ -78,7 +104,7 @@ def ask(request: ChatRequest, user_id: str = Depends(get_current_user_id)):
     }).execute()
 
     try:
-        reply, sources = answer_with_rag(message)
+        reply, sources, steps = answer_with_rag(message)
     except RuntimeError as e:
         raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
@@ -92,10 +118,13 @@ def ask(request: ChatRequest, user_id: str = Depends(get_current_user_id)):
         "sources": sources_json if sources_json else None,
     }).execute()
 
+    background_tasks.add_task(_update_chat_title_background, chat_id)
+
     return ChatResponse(
         reply=reply,
         sources=[Source(title=s["title"], source_url=s["source_url"], snippet=s["snippet"]) for s in sources],
         chat_id=chat_id,
+        steps=steps,
     )
 
 

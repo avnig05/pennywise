@@ -103,14 +103,49 @@ def retrieve_chunks(query: str, top_k: int = TOP_K_CHUNKS) -> list[dict]:
 
 RAG_PROMPT_TEMPLATE = """You are a friendly financial education assistant for Pennywise. Answer the user's question using ONLY the following excerpts from our article library.
 
-Keep your answer to ONE short paragraph (2–4 sentences). Be direct and accurate. Briefly cite the source(s) you used (e.g. "According to the CFPB..." or "As [Source Title] explains..."). Do not make up facts or use outside knowledge. If the excerpts don't have enough info, say so in one sentence and suggest they explore the topic in the app.
+FORMAT:
+- For how-to or process questions (e.g. "How do I build an emergency fund?", "What are the steps to improve my credit?"): Use numbered steps. Format as: 1. First... 2. Then... 3. Finally... Include a brief source citation at the end (e.g. "According to the CFPB..." or "As [Source Title] explains...").
+- For simple factual questions: Use ONE short paragraph (2–4 sentences). Be direct and accurate. Briefly cite the source(s) you used.
+
+Be accurate. Do not make up facts or use outside knowledge. If the excerpts don't have enough info, say so in one sentence and suggest they explore the topic in the app.
 
 Article excerpts (source title and snippet):
 {context}
 
 User question: {question}
 
-Answer (one short paragraph, with a brief source citation):"""
+Answer:"""
+
+
+def _parse_steps_from_response(text: str) -> Optional[list[str]]:
+    """
+    Parse numbered steps from LLM response.
+    Handles patterns like "1. First...", "2. Then...", or "Step 1:", "Step 2:".
+    Returns list of step strings, or None if no clear steps found.
+    """
+    if not text or not text.strip():
+        return None
+    text = text.strip()
+
+    # Try "1. ", "2. " pattern (numbered list)
+    step_pattern = re.compile(r"(\d+)\.\s+(.+?)(?=\s*\d+\.\s+|\s*$)", re.DOTALL)
+    matches = step_pattern.findall(text)
+    if matches:
+        steps = [m[1].strip() for m in matches if m[1].strip()]
+        if len(steps) >= 2:
+            return steps
+
+    # Try "Step 1:", "Step 2:" pattern
+    step_label_pattern = re.compile(
+        r"Step\s+(\d+)\s*[:\-]\s*(.+?)(?=Step\s+\d+\s*[:\-]|\s*$)", re.DOTALL | re.IGNORECASE
+    )
+    matches = step_label_pattern.findall(text)
+    if matches:
+        steps = [m[1].strip() for m in matches if m[1].strip()]
+        if len(steps) >= 2:
+            return steps
+
+    return None
 
 
 def _create_llm(model: str = "gemini-2.5-flash") -> ChatGoogleGenerativeAI:
@@ -176,17 +211,19 @@ def _invoke_ollama(prompt: str, timeout: float = 60.0) -> Optional[str]:
 def answer_with_rag(
     question: str,
     top_k: int = TOP_K_CHUNKS,
-) -> tuple[str, list[dict]]:
+) -> tuple[str, list[dict], Optional[list[str]]]:
     """
     Retrieve relevant chunks, then generate an answer using the RAG prompt.
-    Returns (answer_text, sources) where sources is a list of
-    { "title", "source_url", "snippet" } for citations.
+    Returns (answer_text, sources, steps) where sources is a list of
+    { "title", "source_url", "snippet" } for citations, and steps is an optional
+    list of parsed step strings when the answer uses numbered format.
     """
     chunks = retrieve_chunks(question, top_k=top_k)
     if not chunks:
         return (
             "I don't have any article content to reference yet. Try again after more articles are added.",
             [],
+            None,
         )
 
     context_parts = []
@@ -209,6 +246,7 @@ def answer_with_rag(
             return (
                 "Ollama returned an empty response. Try a different model (OLLAMA_MODEL) or check the Ollama logs.",
                 [],
+                None,
             )
     else:
         response = _invoke_llm_with_retry_and_fallback(prompt)
@@ -216,6 +254,7 @@ def answer_with_rag(
             return (
                 "We're out of AI capacity for the moment (daily free-tier limit). Try again tomorrow, or enable billing in Google AI Studio for more requests.",
                 [],
+                None,
             )
         answer = response.content if hasattr(response, "content") else str(response)
         answer = (answer or "").strip()
@@ -236,4 +275,5 @@ def answer_with_rag(
             "snippet": (c.get("content") or "")[:200] + ("..." if len(c.get("content") or "") > 200 else ""),
         })
 
-    return answer, sources
+    steps = _parse_steps_from_response(answer)
+    return answer, sources, steps

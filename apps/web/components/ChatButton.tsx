@@ -23,6 +23,24 @@ function formatTime(dateStr: string) {
   return d.toLocaleDateString();
 }
 
+function parseStepsFromContent(content: string): string[] | null {
+  if (!content?.trim()) return null;
+  const trimmed = content.trim();
+  // Match "1. text" or "2. text" pattern
+  const numberedMatches = [...trimmed.matchAll(/(\d+)\.\s+(.+?)(?=\s*\d+\.\s+|\s*$)/gs)];
+  if (numberedMatches.length >= 2) {
+    const steps = numberedMatches.map((m) => m[2].trim()).filter(Boolean);
+    if (steps.length >= 2) return steps;
+  }
+  // Match "Step 1:", "Step 2:" pattern
+  const stepLabelMatches = [...trimmed.matchAll(/Step\s+\d+\s*[:\-]\s*(.+?)(?=Step\s+\d+\s*[:\-]|\s*$)/gis)];
+  if (stepLabelMatches.length >= 2) {
+    const steps = stepLabelMatches.map((m) => m[1].trim()).filter(Boolean);
+    if (steps.length >= 2) return steps;
+  }
+  return null;
+}
+
 export default function ChatButton() {
   const [open, setOpen] = useState(false);
   const [chats, setChats] = useState<ChatListItem[]>([]);
@@ -86,6 +104,7 @@ export default function ChatButton() {
           role: "assistant",
           content: res.reply,
           sources: res.sources ?? null,
+          steps: res.steps ?? null,
           created_at: new Date().toISOString(),
         },
       ]);
@@ -210,14 +229,30 @@ export default function ChatButton() {
                     </p>
                   )}
                   <div className="space-y-4">
-                    {messages.map((msg) => (
+                    {messages.map((msg) => {
+                      const stepsToShow =
+                        msg.role === "assistant" ? (msg.steps ?? parseStepsFromContent(msg.content)) : null;
+                      return (
                       <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                         <div
                           className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
                             msg.role === "user" ? "bg-[var(--color-sage)] text-white" : "bg-gray-100 text-gray-800"
                           }`}
                         >
-                          <p className="whitespace-pre-wrap">{msg.content}</p>
+                          {stepsToShow && stepsToShow.length > 0 ? (
+                            <ol className="list-none space-y-2 pl-0">
+                              {stepsToShow.map((step, i) => (
+                                <li key={i} className="flex gap-2">
+                                  <span className="flex h-6 min-w-6 shrink-0 items-center justify-center rounded-full bg-[var(--color-sage)]/20 text-xs font-semibold text-gray-700">
+                                    {i + 1}
+                                  </span>
+                                  <span className="whitespace-pre-wrap">{step}</span>
+                                </li>
+                              ))}
+                            </ol>
+                          ) : (
+                            <p className="whitespace-pre-wrap">{msg.content}</p>
+                          )}
                           {msg.sources && msg.sources.length > 0 && (
                             <div className="mt-2 border-t border-gray-300 pt-2">
                               <p className="mb-1 text-xs font-medium">Sources:</p>
@@ -234,7 +269,8 @@ export default function ChatButton() {
                           )}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
                     {loading && (
                       <div className="flex justify-start">
                         <div className="rounded-lg bg-gray-100 px-3 py-2">
