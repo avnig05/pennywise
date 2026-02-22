@@ -24,6 +24,7 @@ export async function getTip(): Promise<TipResponse> {
     method: "GET",
     headers,
     credentials: "include",
+    cache: "no-store",
   });
 
   if (!res.ok) {

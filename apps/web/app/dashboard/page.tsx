@@ -4,6 +4,8 @@ import RecommendedArticles from "./RecommendedArticles";
 import TipOfTheDay from "./TipOfTheDay";
 import LearningProgress from "./LearningProgress";
 
+export const dynamic = "force-dynamic";
+
 export default function Dashboard() {
   return (
     <main className="min-h-screen">
