@@ -27,13 +27,15 @@ function parseStepsFromContent(content: string): string[] | null {
   if (!content?.trim()) return null;
   const trimmed = content.trim();
   // Match "1. text" or "2. text" pattern
-  const numberedMatches = [...trimmed.matchAll(/(\d+)\.\s+(.+?)(?=\s*\d+\.\s+|\s*$)/gs)];
+  const numberedMatches = [...trimmed.matchAll(/(\d+)\.\s+([\s\S]+?)(?=\s*\d+\.\s+|\s*$)/g)];
   if (numberedMatches.length >= 2) {
     const steps = numberedMatches.map((m) => m[2].trim()).filter(Boolean);
     if (steps.length >= 2) return steps;
   }
   // Match "Step 1:", "Step 2:" pattern
-  const stepLabelMatches = [...trimmed.matchAll(/Step\s+\d+\s*[:\-]\s*(.+?)(?=Step\s+\d+\s*[:\-]|\s*$)/gis)];
+  const stepLabelMatches = [
+    ...trimmed.matchAll(/Step\s+\d+\s*[:\-]\s*([\s\S]+?)(?=Step\s+\d+\s*[:\-]|\s*$)/gi),
+  ];
   if (stepLabelMatches.length >= 2) {
     const steps = stepLabelMatches.map((m) => m[1].trim()).filter(Boolean);
     if (steps.length >= 2) return steps;

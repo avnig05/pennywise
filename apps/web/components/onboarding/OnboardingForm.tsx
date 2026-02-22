@@ -367,7 +367,7 @@ export default function OnboardingForm() {
       <StepIndicator currentStep={stepIndex} totalSteps={totalSteps} />
       <div>
         <h2 className="text-lg font-semibold">{currentStep.title}</h2>
-        {currentStep.body(isLastStep ? undefined : handleNext)}
+        {currentStep.body()}
       </div>
       {validationError ? (
         <p className="text-sm text-red-600">{validationError}</p>
@@ -386,7 +386,7 @@ export default function OnboardingForm() {
         <button
           type={isLastStep ? "submit" : "button"}
           className="cursor-pointer rounded-md bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-60"
-          onClick={handleNext}
+          onClick={isLastStep ? undefined : () => void handleNext()}
           disabled={isSaving}
         >
           {isSaving ? "Saving..." : isLastStep ? "Finish" : "Next"}
