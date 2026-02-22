@@ -1,6 +1,7 @@
 import LoginForm from "@/components/auth/LoginForm";
 import { GraduationCap } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default function LoginPage() {
   return (
@@ -14,7 +15,9 @@ export default function LoginPage() {
         </div>
       </header>
       <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <LoginForm />
+        <Suspense fallback={<div className="text-sm text-gray-600">Loading…</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );
