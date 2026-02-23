@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -9,9 +10,24 @@ from app.api.routes.chat import router as chat_router
 
 app = FastAPI(title="Pennywise API", version="0.1.0")
 
+def _parse_csv_env(name: str, default: str) -> list[str]:
+    raw = os.getenv(name, default)
+    return [v.strip() for v in raw.split(",") if v.strip()]
+
+# CORS
+# - In dev, the web app runs on localhost:3000.
+# - In prod, the web app is on Vercel (including preview deployments).
+#
+# Configure explicitly via:
+# - CORS_ALLOW_ORIGINS="https://your-prod-domain.com,https://another-domain.com"
+# - CORS_ALLOW_ORIGIN_REGEX="^https://.*\\.vercel\\.app$"
+allow_origins = _parse_csv_env("CORS_ALLOW_ORIGINS", "http://localhost:3000")
+allow_origin_regex = os.getenv("CORS_ALLOW_ORIGIN_REGEX", r"^https://.*\.vercel\.app$")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=allow_origins,
+    allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

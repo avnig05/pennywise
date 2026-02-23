@@ -125,91 +125,98 @@ export default function OnboardingForm() {
       {
         id: "age",
         title: "What is your age range?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="age_range"
             value={formState.age_range}
             options={AGE_OPTIONS}
             onChange={(value) => setFormState((prev) => ({ ...prev, age_range: value }))}
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ age_range: v }) : undefined}
           />
         ),
       },
       {
         id: "job_type",
         title: "Which best describes your work?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="job_type"
             value={formState.job_type}
             options={JOB_TYPE_OPTIONS}
             onChange={(value) => setFormState((prev) => ({ ...prev, job_type: value }))}
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ job_type: v }) : undefined}
           />
         ),
       },
       {
         id: "state",
         title: "Which state do you live in?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <StateCombobox
             value={formState.state ?? null}
             onChange={(value) =>
               setFormState((prev) => ({ ...prev, state: value }))
             }
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ state: v }) : undefined}
           />
         ),
       },
       {
         id: "pay_frequency",
         title: "How often do you get paid?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="pay_frequency"
             value={formState.pay_frequency}
             options={PAY_FREQUENCY_OPTIONS}
             onChange={(value) => setFormState((prev) => ({ ...prev, pay_frequency: value }))}
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ pay_frequency: v }) : undefined}
           />
         ),
       },
       {
         id: "income",
         title: "What is your monthly take-home income?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="net_income_range"
             value={formState.net_income_range}
             options={INCOME_OPTIONS}
             onChange={(value) => setFormState((prev) => ({ ...prev, net_income_range: value }))}
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ net_income_range: v }) : undefined}
           />
         ),
       },
       {
         id: "rent_status",
         title: "What is your housing situation?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="rent_status"
             value={formState.rent_status}
             options={RENT_STATUS_OPTIONS}
             onChange={(value) => setFormState((prev) => ({ ...prev, rent_status: value }))}
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ rent_status: v }) : undefined}
           />
         ),
       },
       {
         id: "debt_status",
         title: "Do you currently have debt?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="debt_status"
             value={formState.debt_status}
             options={DEBT_STATUS_OPTIONS}
             onChange={(value) => setFormState((prev) => ({ ...prev, debt_status: value }))}
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ debt_status: v }) : undefined}
           />
         ),
       },
       {
         id: "credit_card_status",
         title: "How do you use credit cards?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="credit_card_status"
             value={formState.credit_card_status}
@@ -217,13 +224,14 @@ export default function OnboardingForm() {
             onChange={(value) =>
               setFormState((prev) => ({ ...prev, credit_card_status: value }))
             }
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ credit_card_status: v }) : undefined}
           />
         ),
       },
       {
         id: "emergency_buffer_range",
         title: "How much do you have in emergency savings?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="emergency_buffer_range"
             value={formState.emergency_buffer_range}
@@ -231,25 +239,27 @@ export default function OnboardingForm() {
             onChange={(value) =>
               setFormState((prev) => ({ ...prev, emergency_buffer_range: value }))
             }
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ emergency_buffer_range: v }) : undefined}
           />
         ),
       },
       {
         id: "priority",
         title: "What is your top financial priority?",
-        body: (
+        body: (onSelectAndNext?: (overrides: Partial<FormState>) => void) => (
           <RadioGroup
             name="priority"
             value={formState.priority}
             options={PRIORITY_OPTIONS}
             onChange={(value) => setFormState((prev) => ({ ...prev, priority: value }))}
+            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ priority: v }) : undefined}
           />
         ),
       },
       {
         id: "interests",
         title: "What topics are you interested in learning?",
-        body: (
+        body: () => (
           <CheckboxGroup
             options={INTEREST_OPTIONS}
             value={formState.interests}
@@ -265,32 +275,32 @@ export default function OnboardingForm() {
   const currentStep = steps[stepIndex];
   const isLastStep = stepIndex === totalSteps - 1;
 
-  const validateStep = () => {
+  const validateStep = (state: FormState = formState) => {
     switch (currentStep.id) {
       case "age":
-        return formState.age_range ? null : "Please select an age range.";
+        return state.age_range ? null : "Please select an age range.";
       case "job_type":
-        return formState.job_type ? null : "Please select a job type.";
+        return state.job_type ? null : "Please select a job type.";
       case "state":
-        return formState.state ? null : "Please choose a state.";
+        return state.state ? null : "Please choose a state.";
       case "pay_frequency":
-        return formState.pay_frequency ? null : "Please choose a pay frequency.";
+        return state.pay_frequency ? null : "Please choose a pay frequency.";
       case "income":
-        return formState.net_income_range ? null : "Please choose an income range.";
+        return state.net_income_range ? null : "Please choose an income range.";
       case "rent_status":
-        return formState.rent_status ? null : "Please select a housing option.";
+        return state.rent_status ? null : "Please select a housing option.";
       case "debt_status":
-        return formState.debt_status ? null : "Please select a debt option.";
+        return state.debt_status ? null : "Please select a debt option.";
       case "credit_card_status":
-        return formState.credit_card_status ? null : "Please select a credit card option.";
+        return state.credit_card_status ? null : "Please select a credit card option.";
       case "emergency_buffer_range":
-        return formState.emergency_buffer_range
+        return state.emergency_buffer_range
           ? null
           : "Please select an emergency savings range.";
       case "priority":
-        return formState.priority ? null : "Please select a priority.";
+        return state.priority ? null : "Please select a priority.";
       case "interests":
-        return formState.interests.length > 0
+        return state.interests.length > 0
           ? null
           : "Please select at least one interest.";
       default:
@@ -298,14 +308,14 @@ export default function OnboardingForm() {
     }
   };
 
-  const persist = async () => {
-    if (!formState.state) {
+  const persist = async (state: FormState = formState) => {
+    if (!state.state) {
       return true;
     }
     setIsSaving(true);
     setError(null);
     try {
-      await updateProfile(formState);
+      await updateProfile(state);
       return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : "Failed to save answers";
@@ -316,15 +326,17 @@ export default function OnboardingForm() {
     }
   };
 
-  const handleNext = async () => {
+  const handleNext = async (overrides?: Partial<FormState>) => {
     if (isLastStep) return;
-    const validationMessage = validateStep();
+    const stateToUse = overrides ? { ...formState, ...overrides } : formState;
+    const validationMessage = validateStep(stateToUse);
     if (validationMessage) {
       setValidationError(validationMessage);
       return;
     }
     setValidationError(null);
-    const ok = await persist();
+    if (overrides) setFormState((prev) => ({ ...prev, ...overrides }));
+    const ok = await persist(stateToUse);
     if (ok) {
       setStepIndex((prev) => Math.min(prev + 1, totalSteps - 1));
     }
@@ -355,7 +367,7 @@ export default function OnboardingForm() {
       <StepIndicator currentStep={stepIndex} totalSteps={totalSteps} />
       <div>
         <h2 className="text-lg font-semibold">{currentStep.title}</h2>
-        {currentStep.body}
+        {currentStep.body()}
       </div>
       {validationError ? (
         <p className="text-sm text-red-600">{validationError}</p>
@@ -374,7 +386,7 @@ export default function OnboardingForm() {
         <button
           type={isLastStep ? "submit" : "button"}
           className="cursor-pointer rounded-md bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-60"
-          onClick={handleNext}
+          onClick={isLastStep ? undefined : () => void handleNext()}
           disabled={isSaving}
         >
           {isSaving ? "Saving..." : isLastStep ? "Finish" : "Next"}
@@ -394,19 +406,24 @@ type RadioGroupProps<T extends string> = {
   value: T | null | undefined;
   options: RadioGroupOption<T>[];
   onChange: (value: T) => void;
+  onSelectAndNext?: (value: T) => void;
 };
 
-function RadioGroup<T extends string>({ name, value, options, onChange }: RadioGroupProps<T>) {
+function RadioGroup<T extends string>({ name, value, options, onChange, onSelectAndNext }: RadioGroupProps<T>) {
+  const handleChange = (optionValue: T) => {
+    onChange(optionValue);
+    onSelectAndNext?.(optionValue);
+  };
   return (
     <div className="mt-4 space-y-3">
       {options.map((option) => (
-        <label key={option.value} className="flex items-center gap-3 text-sm">
+        <label key={option.value} className="flex cursor-pointer items-center gap-3 text-sm">
           <input
             type="radio"
             name={name}
             value={option.value}
             checked={value === option.value}
-            onChange={() => onChange(option.value)}
+            onChange={() => handleChange(option.value)}
           />
           <span>{option.label}</span>
         </label>

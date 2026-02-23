@@ -10,9 +10,13 @@ load_dotenv(dotenv_path=ENV_PATH, override=False)
 
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-# RAG chatbot: "ollama" = local Ollama (no API limits), "gemini" = Google Gemini
-RAG_LLM_BACKEND = os.getenv("RAG_LLM_BACKEND", "ollama").strip().lower()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
+
+# RAG chatbot backend:
+# - "ollama" = local Ollama (no API limits)
+# - "gemini" = Google Gemini via API key
+_DEFAULT_RAG_BACKEND = "gemini" if GEMINI_API_KEY else "ollama"
+RAG_LLM_BACKEND = os.getenv("RAG_LLM_BACKEND", _DEFAULT_RAG_BACKEND).strip().lower()
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip("/")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 # How long to reuse cached recommendations before recomputing (seconds). Default 24h.
