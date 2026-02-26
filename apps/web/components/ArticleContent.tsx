@@ -1,16 +1,47 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { getStructuredArticle } from "@/lib/api/articles";
 import type { StructuredArticle } from "@/lib/api/articles";
 
-/** Placeholder icon for Pennywise - simple P in a circle */
-function PennywiseIcon({ className }: { className?: string }) {
+/** Pennywise logo in a circle - border and bg from globals (intro: grey, callouts: green/yellow/orange) */
+function PennywiseIcon({
+  className,
+  variant = "intro",
+}: {
+  className?: string;
+  variant?: "intro" | "green" | "yellow" | "orange";
+}) {
+  const bgVar =
+    variant === "intro"
+      ? "var(--callout-intro-icon-bg)"
+      : variant === "green"
+        ? "var(--callout-green-bg)"
+        : variant === "yellow"
+          ? "var(--callout-yellow-bg)"
+          : "var(--callout-orange-bg)";
+  const borderVar =
+    variant === "intro"
+      ? "var(--callout-intro-icon-border)"
+      : variant === "green"
+        ? "var(--callout-green-border)"
+        : variant === "yellow"
+          ? "var(--callout-yellow-border)"
+          : "var(--callout-orange-border)";
   return (
     <div
-      className={`flex size-8 shrink-0 items-center justify-center rounded-full border bg-gray-100 text-sm font-semibold ${className ?? ""}`}
+      className={`flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full border ${className ?? ""}`}
+      style={{ backgroundColor: bgVar, borderColor: borderVar }}
+      aria-hidden
     >
-      P
+      <Image
+        src="/pennywise-logo.png"
+        alt=""
+        width={22}
+        height={22}
+        className="h-[22px] w-[22px] brightness-0"
+      />
     </div>
   );
 }
@@ -43,24 +74,24 @@ export default function ArticleContent({ articleId, fallbackSummary }: Props) {
   if (loading) {
     return (
       <div className="mt-8 space-y-6">
-        <div className="h-24 animate-pulse rounded-xl bg-gray-100" />
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="space-y-2">
-              <div className="h-6 w-2/3 animate-pulse rounded bg-gray-200" />
-              <div className="h-20 animate-pulse rounded bg-gray-100" />
-              <div className="ml-4 h-16 w-4/5 animate-pulse rounded-lg bg-gray-100" />
-            </div>
-          ))}
-        </div>
+        <div className="h-24 animate-pulse rounded-lg border border-[var(--content-section-border)] bg-[var(--callout-intro-bg)]" />
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="animate-pulse rounded-lg border border-[var(--content-section-border)] bg-[var(--bg-card)] p-6"
+          >
+            <div className="h-6 w-2/3 rounded bg-[var(--callout-intro-icon-bg)]" />
+            <div className="mt-3 h-20 rounded bg-[var(--callout-intro-icon-bg)]" />
+          </div>
+        ))}
       </div>
     );
   }
 
   if (error || !structured) {
     return (
-      <div className="mt-8">
-        <div className="space-y-4 text-gray-700">
+      <div className="mt-8 rounded-lg border border-[var(--content-section-border)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-sm)]">
+        <div className="article-body space-y-4 text-[var(--text-meta)]">
           {fallbackSummary
             ? fallbackSummary
                 .split(/\n\n+/)
@@ -77,38 +108,105 @@ export default function ArticleContent({ articleId, fallbackSummary }: Props) {
   }
 
   return (
-    <div className="mt-8 space-y-8">
-      {/* Intro commentary box */}
+    <div className="mt-8 space-y-6">
+      {/* First comment: white container, avatar left, message bubble right */}
       {structured.intro_commentary && (
-        <div className="rounded-xl border bg-gray-50 p-4">
-          <div className="flex gap-3">
-            <PennywiseIcon />
-            <p className="text-gray-800">{structured.intro_commentary}</p>
+        <div
+          className="flex gap-4 rounded-lg p-4"
+          style={{
+            backgroundColor: "#6B90800D",
+            borderTop: "2px solid #6B908033",
+          }}
+        >
+          <div
+            className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[var(--bg-card)]"
+            style={{ border: "1px solid #E5E7EB" }}
+            aria-hidden
+          >
+            <Image
+              src="/pennywise-logo.png"
+              alt=""
+              width={28}
+              height={28}
+              className="h-7 w-7 brightness-0"
+            />
+          </div>
+          <div
+            className="min-w-0 flex-1 rounded-2xl bg-[var(--bg-card)] px-4 py-3"
+            style={{
+              borderTop: "2px solid #6B908026",
+              boxShadow:
+                "0px 1px 2px -1px #0000001A, 0px 1px 3px 0px #0000001A",
+            }}
+          >
+            <p className="text-sm leading-relaxed text-[var(--callout-intro-text)]">
+              {structured.intro_commentary}
+            </p>
           </div>
         </div>
       )}
 
-      {/* Sections with commentary after each */}
+      {/* Sections: white cards + green “Did you know?” callouts (Figma) */}
       {structured.sections.map((section, i) => (
-        <section key={i}>
-          <h2 className="text-xl font-semibold text-gray-900">{section.heading}</h2>
-          <div className="mt-3 space-y-3 text-gray-700">
-            {section.content
-              .split(/\n\n+/)
-              .filter(Boolean)
-              .map((para, j) => (
-                <p key={j}>{para.trim()}</p>
-              ))}
-          </div>
+        <div key={i} className="space-y-4">
+          <section
+            className="rounded-lg p-6 shadow-[var(--shadow-sm)]"
+            style={{
+              backgroundColor: "#FFFFFF99",
+              borderTop: "2px solid #6B908013",
+            }}
+          >
+            <h2 className="text-xl font-semibold text-[var(--text-title)]">
+              {section.heading}
+            </h2>
+            <div className="article-body mt-3 space-y-3 text-[var(--text-meta)]">
+              {section.content
+                .split(/\n\n+/)
+                .filter(Boolean)
+                .map((para, j) => (
+                  <p key={j}>{para.trim()}</p>
+                ))}
+            </div>
+          </section>
           {section.commentary && (
-            <div className="mt-4 rounded-xl border bg-gray-50 p-4">
-              <div className="flex gap-3">
-                <PennywiseIcon />
-                <p className="text-gray-800">{section.commentary}</p>
+            <div className="flex gap-4 items-start">
+              <div
+                className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--bg-card)]"
+                style={{ border: "1px solid #6B908033" }}
+                aria-hidden
+              >
+                <Image
+                  src="/pennywise-logo.png"
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 brightness-0"
+                />
+              </div>
+              <div
+                className="min-w-0 flex-1 rounded-2xl px-4 py-3"
+                style={{
+                  backgroundColor: "#6B90801A",
+                  borderTop: "2px solid #6B908033",
+                }}
+              >
+                <p
+                  className="italic"
+                  style={{
+                    fontFamily: "var(--font-inter), Inter, sans-serif",
+                    fontWeight: 400,
+                    fontSize: "14px",
+                    lineHeight: "20px",
+                    letterSpacing: "-0.15px",
+                    color: "#3D4451CC",
+                  }}
+                >
+                  {section.commentary}
+                </p>
               </div>
             </div>
           )}
-        </section>
+        </div>
       ))}
     </div>
   );

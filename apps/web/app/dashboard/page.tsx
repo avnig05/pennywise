@@ -26,7 +26,12 @@ export default function Dashboard() {
         <LearningProgress />
 
         <div className="mt-10">
-          <h3 className="text-lg font-semibold text-gray-900">Recommended for You</h3>
+          <h3 className="text-xl font-semibold text-[var(--text-primary)]">
+            Recommended for You
+          </h3>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Articles tailored to your learning goals
+          </p>
           <RecommendedArticles />
         </div>
       </section>

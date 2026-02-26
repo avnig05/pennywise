@@ -57,23 +57,23 @@ export default function ArticlePageHeader({
       <div className="flex items-center justify-between">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+          className="inline-flex items-center gap-2 text-sm text-[var(--text-nav)]"
         >
           <ArrowLeft size={16} />
           Back to Dashboard
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 text-[var(--text-nav)]">
           <button
             aria-label="Toggle bookmark"
             onClick={() => toggle(articleId)}
-            className="text-gray-600 hover:text-gray-900"
+            className="hover:opacity-80"
           >
             {saved ? <BookmarkCheck size={20} /> : <Bookmark size={20} />}
           </button>
           <button
             aria-label="Share"
             onClick={handleShare}
-            className="text-gray-600 hover:text-gray-900"
+            className="hover:opacity-80"
           >
             <Share2 size={20} />
           </button>
@@ -81,30 +81,30 @@ export default function ArticlePageHeader({
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <span className="rounded-full border px-3 py-1 text-xs text-gray-700">
+        <span className="rounded-lg bg-[var(--tag-category-bg)] px-2.5 py-1 text-xs font-medium text-[var(--tag-category-text)]">
           {category}
         </span>
-        <span className="rounded-full border px-3 py-1 text-xs text-gray-700">
+        <span className="text-xs text-[var(--text-meta)]">
           {readTimeMin} min read
         </span>
-        <span className="rounded-full border px-3 py-1 text-xs capitalize text-gray-700">
+        <span className="text-xs capitalize text-[var(--text-meta)]">
           {difficulty}
         </span>
       </div>
 
-      <h1 className="mt-4 text-2xl font-bold text-gray-900 sm:text-3xl">
+      <h1 className="mt-4 text-2xl font-bold leading-tight text-[var(--text-title)] sm:text-3xl">
         {title}
       </h1>
 
       {(sourceName || sourceUrl) && (
-        <div className="mt-2 text-sm text-gray-600">
+        <div className="mt-2 text-sm text-[var(--text-meta)]">
           {sourceName}
           {sourceUrl && (
             <a
               href={sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-2 text-[var(--color-sage)] underline hover:no-underline"
+              className="ml-2 text-[var(--text-nav)] underline hover:no-underline"
             >
               View original
             </a>

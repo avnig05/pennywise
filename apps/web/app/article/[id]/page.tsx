@@ -24,7 +24,7 @@ export default async function ArticlePage({ params }: Props) {
       : String(article.category);
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-[var(--bg-page)]">
       <article className="mx-auto max-w-3xl px-6 py-8">
         <ArticlePageHeader
           articleId={id}
