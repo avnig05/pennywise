@@ -16,7 +16,7 @@ export default function ArticlePageBody({ articleId, fallbackSummary }: Props) {
   return (
     <div className="mt-6">
       <ArticleContent articleId={articleId} fallbackSummary={fallbackSummary} />
-      <MarkAsCompleteSection quizRef={quizRef} />
+      <MarkAsCompleteSection articleId={articleId} quizRef={quizRef} />
       <div ref={quizRef} className="mt-12">
         <ArticleQuiz articleId={articleId} />
       </div>
