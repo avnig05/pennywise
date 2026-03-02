@@ -1,16 +1,36 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Trophy } from "lucide-react";
+import { getProfile } from "@/lib/api/profile";
+import type { LearningMetadata } from "@/types/profile";
 
-const stats = [
-  { label: "Articles Read", value: 12 },
-  { label: "Quizzes Done", value: 4 },
-  { label: "Day Streak", value: 3, emoji: "🔥" },
-  { label: "Badges Earned", value: 4 },
-];
+const DEFAULT_META: LearningMetadata = {
+  articles_read: 0,
+  quizzes_completed: 0,
+  current_streak: 0,
+  longest_streak: 0,
+  last_active_date: null,
+  badges: {},
+};
 
 export default function LearningStats() {
+  const [meta, setMeta] = useState<LearningMetadata>(DEFAULT_META);
+
+  useEffect(() => {
+    getProfile()
+      .then((p) => setMeta({ ...DEFAULT_META, ...p.learning_metadata }))
+      .catch(() => {});
+  }, []);
+
+  const stats = [
+    { label: "Articles Read", value: meta.articles_read },
+    { label: "Quizzes Done", value: meta.quizzes_completed },
+    { label: "Day Streak", value: meta.current_streak, emoji: "🔥" },
+    { label: "Badges Earned", value: Object.keys(meta.badges).length },
+  ];
+
   return (
     <Link href="/achievements" className="block mt-8">
       <div className="rounded-2xl border-2 border-[var(--color-primary)]/20 bg-[#f8faf8] p-5 cursor-pointer transition-all hover:border-[var(--color-primary)]/40 hover:shadow-md">

@@ -13,6 +13,7 @@ from app.services.quiz_generator import (
     mark_quiz_generation_started,
     run_quiz_generation_and_clear,
 )
+from app.services.learning_metadata import record_article_completion
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
@@ -94,16 +95,30 @@ async def submit_quiz(
     )
     total = len(questions)
     score = int((correct / total) * 100) if total else 0
+
+    existing = (
+        supabase.table("user_article_completions")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("article_id", article_id)
+        .execute()
+    )
+    is_new_completion = not existing.data
+
     completion_data = {
         "user_id": user_id,
         "article_id": article_id,
         "quiz_score": score,
-        "user_answers": submission.answers,  # Store user's answers as JSON array
+        "user_answers": submission.answers,
     }
     supabase.table("user_article_completions").upsert(
         completion_data,
         on_conflict="user_id,article_id",
     ).execute()
+
+    if is_new_completion:
+        record_article_completion(user_id)
+
     return {
         "score": score,
         "total_questions": total,

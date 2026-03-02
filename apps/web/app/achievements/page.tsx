@@ -1,14 +1,19 @@
 "use client";
 
-import { BookOpen, HelpCircle, Globe, Clock, Flame, Trophy } from "lucide-react";
+import { useEffect, useState } from "react";
+import { BookOpen, HelpCircle, Flame, Trophy } from "lucide-react";
 import ChatButton from "@/components/ChatButton";
+import { getProfile } from "@/lib/api/profile";
+import type { LearningMetadata } from "@/types/profile";
 
-const stats = [
-  { icon: BookOpen, label: "Articles Read", value: 12 },
-  { icon: HelpCircle, label: "Quizzes Completed", value: 4 },
-  { icon: Globe, label: "Topics Explored", value: 3 },
-  { icon: Clock, label: "Total Learning Time", value: "2h 45m" },
-];
+const DEFAULT_META: LearningMetadata = {
+  articles_read: 0,
+  quizzes_completed: 0,
+  current_streak: 0,
+  longest_streak: 0,
+  last_active_date: null,
+  badges: {},
+};
 
 const articleMilestones = [
   { target: 1, label: "Article" },
@@ -24,27 +29,32 @@ const quizMilestones = [
   { target: 25, label: "Quizzes" },
 ];
 
-const ARTICLES_READ = 12;
-const QUIZZES_DONE = 4;
-
-interface Achievement {
+interface BadgeDef {
+  id: string;
   title: string;
   description: string;
   emoji: string;
-  unlocked: boolean;
-  date?: string;
 }
 
-const achievements: Achievement[] = [
-  { title: "First Article", description: "Read your first article", emoji: "📖", unlocked: true, date: "February 10" },
-  { title: "5 Articles", description: "Read 5 articles", emoji: "📚", unlocked: true, date: "February 25" },
-  { title: "10 Articles", description: "Read 10 articles", emoji: "🧁", unlocked: true, date: "March 12" },
-  { title: "First Quiz", description: "Complete your first quiz", emoji: "📝", unlocked: true, date: "February 12" },
-  { title: "5 Quizzes", description: "Complete 5 quizzes", emoji: "🎯", unlocked: false },
-  { title: "10 Quizzes", description: "Complete 10 quizzes", emoji: "🏆", unlocked: false },
-  { title: "3 Day Streak", description: "Learn for 3 days in a row", emoji: "🔥", unlocked: true, date: "March 15" },
-  { title: "7 Day Streak", description: "Learn for 7 days in a row", emoji: "⭐", unlocked: false },
+const BADGE_DEFS: BadgeDef[] = [
+  { id: "first_article", title: "First Article", description: "Read your first article", emoji: "📖" },
+  { id: "5_articles", title: "5 Articles", description: "Read 5 articles", emoji: "📚" },
+  { id: "10_articles", title: "10 Articles", description: "Read 10 articles", emoji: "🧁" },
+  { id: "25_articles", title: "25 Articles", description: "Read 25 articles", emoji: "🏅" },
+  { id: "first_quiz", title: "First Quiz", description: "Complete your first quiz", emoji: "📝" },
+  { id: "5_quizzes", title: "5 Quizzes", description: "Complete 5 quizzes", emoji: "🎯" },
+  { id: "10_quizzes", title: "10 Quizzes", description: "Complete 10 quizzes", emoji: "🏆" },
+  { id: "25_quizzes", title: "25 Quizzes", description: "Complete 25 quizzes", emoji: "💎" },
+  { id: "streak_3", title: "3 Day Streak", description: "Learn for 3 days in a row", emoji: "🔥" },
+  { id: "streak_7", title: "7 Day Streak", description: "Learn for 7 days in a row", emoji: "⭐" },
+  { id: "streak_14", title: "14 Day Streak", description: "Learn for 14 days in a row", emoji: "🌟" },
+  { id: "streak_30", title: "30 Day Streak", description: "Learn for 30 days in a row", emoji: "👑" },
 ];
+
+function formatBadgeDate(iso: string): string {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+}
 
 function JourneyProgress({ milestones, current, icon }: {
   milestones: { target: number; label: string }[];
@@ -88,6 +98,26 @@ function JourneyProgress({ milestones, current, icon }: {
 }
 
 export default function AchievementsPage() {
+  const [meta, setMeta] = useState<LearningMetadata>(DEFAULT_META);
+
+  useEffect(() => {
+    getProfile()
+      .then((p) => setMeta({ ...DEFAULT_META, ...p.learning_metadata }))
+      .catch(() => {});
+  }, []);
+
+  const stats = [
+    { icon: BookOpen, label: "Articles Read", value: meta.articles_read },
+    { icon: HelpCircle, label: "Quizzes Completed", value: meta.quizzes_completed },
+    { icon: Flame, label: "Day Streak", value: meta.current_streak },
+    { icon: Trophy, label: "Badges Earned", value: Object.keys(meta.badges).length },
+  ];
+
+  const streakMessage =
+    meta.current_streak > 0
+      ? "Keep going! Read one article today to continue your streak."
+      : "Complete an article to start your streak!";
+
   return (
     <main className="min-h-screen">
       <section className="mx-auto max-w-6xl px-6 py-8">
@@ -106,12 +136,10 @@ export default function AchievementsPage() {
             </div>
             <p className="text-sm font-medium text-gray-600">Learning Streak</p>
             <div className="mt-3 flex items-baseline gap-2">
-              <span className="text-4xl font-bold text-gray-900">3</span>
+              <span className="text-4xl font-bold text-gray-900">{meta.current_streak}</span>
               <span className="text-xl font-semibold text-gray-900">Day Streak 🔥</span>
             </div>
-            <p className="mt-3 text-sm text-gray-600">
-              Keep going! Read one article today to continue your streak.
-            </p>
+            <p className="mt-3 text-sm text-gray-600">{streakMessage}</p>
           </div>
 
           {/* Your Stats Card */}
@@ -136,7 +164,7 @@ export default function AchievementsPage() {
           <h3 className="text-base font-semibold text-gray-900 mb-8">Article Journey</h3>
           <JourneyProgress
             milestones={articleMilestones}
-            current={ARTICLES_READ}
+            current={meta.articles_read}
             icon={<BookOpen className="w-5 h-5" />}
           />
         </div>
@@ -146,7 +174,7 @@ export default function AchievementsPage() {
           <h3 className="text-base font-semibold text-gray-900 mb-8">Quiz Journey</h3>
           <JourneyProgress
             milestones={quizMilestones}
-            current={QUIZZES_DONE}
+            current={meta.quizzes_completed}
             icon={<HelpCircle className="w-5 h-5" />}
           />
         </div>
@@ -155,25 +183,29 @@ export default function AchievementsPage() {
         <div className="mt-8 rounded-2xl border bg-white p-6">
           <h3 className="text-base font-semibold text-gray-900 mb-6">Achievements</h3>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {achievements.map((a) => (
-              <div
-                key={a.title}
-                className={`rounded-xl border p-4 text-center transition-all ${
-                  a.unlocked
-                    ? "bg-white border-gray-200 shadow-sm"
-                    : "bg-gray-50 border-gray-100 opacity-60"
-                }`}
-              >
-                <div className="text-3xl mb-2">{a.emoji}</div>
-                <p className={`text-sm font-semibold ${a.unlocked ? "text-gray-900" : "text-gray-500"}`}>
-                  {a.title}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">{a.description}</p>
-                <p className={`text-xs mt-2 ${a.unlocked ? "text-[var(--color-primary)] font-medium" : "text-gray-400"}`}>
-                  {a.unlocked ? a.date : "Locked"}
-                </p>
-              </div>
-            ))}
+            {BADGE_DEFS.map((b) => {
+              const unlockedDate = meta.badges[b.id];
+              const unlocked = !!unlockedDate;
+              return (
+                <div
+                  key={b.id}
+                  className={`rounded-xl border p-4 text-center transition-all ${
+                    unlocked
+                      ? "bg-white border-gray-200 shadow-sm"
+                      : "bg-gray-50 border-gray-100 opacity-60"
+                  }`}
+                >
+                  <div className="text-3xl mb-2">{b.emoji}</div>
+                  <p className={`text-sm font-semibold ${unlocked ? "text-gray-900" : "text-gray-500"}`}>
+                    {b.title}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">{b.description}</p>
+                  <p className={`text-xs mt-2 ${unlocked ? "text-[var(--color-primary)] font-medium" : "text-gray-400"}`}>
+                    {unlocked ? formatBadgeDate(unlockedDate) : "Locked"}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
