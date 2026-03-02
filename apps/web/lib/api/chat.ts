@@ -10,6 +10,7 @@ export interface ChatResponse {
   reply: string;
   sources: ChatSource[];
   chat_id?: string;
+  steps?: string[];
 }
 
 export interface ChatListItem {
@@ -24,6 +25,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   sources?: ChatSource[] | null;
+  steps?: string[] | null;
   created_at: string;
 }
 
