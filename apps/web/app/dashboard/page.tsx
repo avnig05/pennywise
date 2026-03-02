@@ -1,8 +1,8 @@
+import { Suspense } from "react";
 import ChatButton from "@/components/ChatButton";
 import LearningStats from "@/components/LearningStats";
 import RecommendedArticles from "./RecommendedArticles";
 import TipOfTheDay from "./TipOfTheDay";
-import { Suspense } from "react";
 
 export default function Dashboard() {
   return (
@@ -26,7 +26,12 @@ export default function Dashboard() {
         <LearningStats />
 
         <div className="mt-10">
-          <h3 className="text-lg font-semibold text-gray-900">Recommended for You</h3>
+          <h3 className="text-xl font-semibold text-[var(--text-primary)]">
+            Recommended for You
+          </h3>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Articles tailored to your learning goals
+          </p>
           <RecommendedArticles />
         </div>
       </section>
