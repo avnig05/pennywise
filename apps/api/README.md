@@ -52,3 +52,21 @@ Set `RAG_LLM_BACKEND=gemini` in `.env`. You’ll need `GEMINI_API_KEY`. Free tie
   Response: `{ "reply": "...", "sources": [{ "title", "source_url", "snippet" }] }`
 
 **From here:** Wire the ChatButton (or a chat page) to this endpoint; optionally add conversation history (e.g. `chats` / `messages` tables) and pass last N turns into the RAG prompt for multi-turn chat.
+
+## Article structured content
+
+`GET /articles/:id/structured` returns sections and Pennywise commentary **from the database only** (no LLM at read time). Pre-generate with a script.
+
+**1. Add the column once** (Supabase → SQL Editor): run `scripts/add_structured_content_column.sql` or  
+`ALTER TABLE articles ADD COLUMN IF NOT EXISTS structured_content jsonb DEFAULT NULL;`
+
+**2. Generate structured content** (from `apps/api`):
+
+```bash
+python scripts/backfill_structured_articles.py              # only articles missing structured_content
+python scripts/backfill_structured_articles.py --limit 5   # test with 5
+python scripts/backfill_structured_articles.py --all        # regenerate all
+python scripts/backfill_structured_articles.py --force <id> # regenerate one
+```
+
+Uses Ollama by default (same as RAG). Set `RAG_LLM_BACKEND=gemini` in `.env` to use Gemini instead. After the script runs, article pages load structured content from the DB with no per-request generation.

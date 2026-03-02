@@ -41,14 +41,14 @@ export default function RecommendedArticles() {
 
   if (articles.length === 0) {
     return (
-      <div className="mt-4 rounded-2xl border bg-white p-6 text-gray-700">
+      <div className="mt-4 rounded-2xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-secondary)] shadow-[var(--shadow-sm)]">
         No recommendations available yet.
       </div>
     );
   }
 
   return (
-    <div className="mt-4 grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
+    <div className="mt-4 grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
       {articles.map((article) => (
         <ArticleCard key={article.id} article={article} />
       ))}

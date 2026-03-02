@@ -1,5 +1,5 @@
 import SignUpForm from "@/components/auth/SignUpForm";
-import { GraduationCap } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export default function SignUpPage() {
@@ -8,7 +8,13 @@ export default function SignUpPage() {
       <header className="w-full py-4 px-6 bg-white border-b">
         <div className="max-w-6xl mx-auto">
           <Link href="/" className="flex items-center gap-2">
-            <GraduationCap className="text-sage-500" size={24} />
+            <Image
+              src="/pennywise-logo.png"
+              alt="Pennywise"
+              width={28}
+              height={28}
+              className="h-7 w-auto brightness-0"
+            />
             <span className="text-lg font-semibold text-gray-700">pennywise</span>
           </Link>
         </div>

@@ -58,45 +58,60 @@ export default function ArticleCard({ article }: Props) {
       ? article.description
       : article.description.slice(0, maxDescLen).trim().replace(/\s+\S*$/, "") + "…";
 
+  const categoryDisplay =
+    typeof article.category === "string"
+      ? article.category.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : String(article.category);
+
   return (
     <div
-      className={`group rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${
+      className={`group rounded-2xl p-6 shadow-[var(--shadow-sm)] transition hover:shadow-[var(--shadow-md)] ${
         isCompleted
-          ? "border-green-400 bg-gradient-to-br from-green-50 to-emerald-50"
-          : "bg-white"
+          ? "border border-green-200 bg-gradient-to-br from-green-50/80 to-emerald-50/80"
+          : "border border-[var(--border-color)] bg-[var(--bg-card)]"
       }`}
     >
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2">
-          <span className="rounded-full border px-3 py-1 text-xs text-gray-700">{article.category}</span>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-lg bg-[var(--color-primary-light)] px-2.5 py-1 text-xs font-medium text-[var(--text-primary)]">
+            {categoryDisplay}
+          </span>
+          <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs text-gray-700">
+            {article.readTimeMin} min read
+          </span>
+          <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs capitalize text-gray-700">
+            {article.difficulty}
+          </span>
           {isCompleted && (
-            <div className="flex items-center gap-1.5 rounded-full border-2 border-green-300 bg-green-50 px-2.5 py-1">
-              <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-              <span className="text-xs font-semibold text-green-700">Completed</span>
-            </div>
+            <span className="flex items-center gap-1 rounded-lg bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Completed
+            </span>
           )}
         </div>
         <button
           aria-label="Toggle bookmark"
           onClick={() => toggle(article.id)}
-          className="text-gray-700 hover:text-[var(--color-sage)] transition"
+          className="shrink-0 text-gray-500 hover:text-[var(--color-sage)] transition"
         >
           {saved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
         </button>
       </div>
-      <h3 className="mt-4 text-lg font-semibold text-gray-900">{article.title}</h3>
-      <p className="mt-2 text-sm text-gray-700 line-clamp-4">{description}</p>
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
-        <span>{article.readTimeMin} min read</span>
-        <span className="rounded-full border px-2 py-1 text-xs">{article.difficulty}</span>
+      <h3 className="mt-4 text-lg font-semibold leading-snug text-[var(--text-primary)]">
+        {article.title}
+      </h3>
+      <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)] line-clamp-4">
+        {description}
+      </p>
+      <div className="mt-5 flex flex-wrap items-center gap-3">
         {isCompleted && completionScore !== null && (
-          <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+          <span className="rounded-lg bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
             Score: {completionScore}%
           </span>
         )}
         <Link
           href={`/article/${article.id}`}
-          className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-sage)] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90"
+          className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-sage)] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90 hover:shadow-md"
         >
           <BookOpen size={16} />
           {isCompleted ? "Review article" : "Read"}
