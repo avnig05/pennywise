@@ -15,12 +15,12 @@ from app.services.scraper import ScrapedArticle
 # Valid values for classification (must match app.models.article)
 CATEGORIES = [
     "budgeting", "investing", "credit cards", "credit score",
-    "student loans", "debt management", "taxes", "savings",
+    "student loans", "debt management", "taxes", "savings", "banking",
 ]
 DIFFICULTIES = ["beginner", "intermediate", "advanced"]
 
 CLASSIFY_PROMPT_TEMPLATE = """You are classifying a financial education article. Based on the title and content below, choose exactly one category and one difficulty.
-Categories (pick one): budgeting, investing, credit cards, credit score, student loans, debt management, taxes, savings
+Categories (pick one): budgeting, investing, credit cards, credit score, student loans, debt management, taxes, savings, banking
 Difficulty (pick one): beginner = introductory/basic, intermediate = some finance knowledge, advanced = assumes familiarity or specialized terms
 Respond with exactly these two lines, nothing else:
 Category: <one word from the list above, e.g. credit cards>
@@ -176,6 +176,89 @@ def summarize_content(
     )
     
     return summarize_article(article, max_length=max_length, temperature=temperature)
+
+
+CHAT_SUMMARY_PROMPT_TEMPLATE = """You are summarizing a chat conversation for a sidebar display. The chat is a financial education Q&A.
+
+Given the conversation below, write ONLY 2-3 words that capture the main topic. Examples:
+- "Tax basics"
+- "Emergency funds"
+- "Credit scores"
+
+Rules:
+- Exactly 2-3 words, no more
+- Be specific to the actual topics discussed
+- Use plain, simple words
+- No punctuation, no quotes
+
+Conversation:
+{conversation}
+
+Summary:"""
+
+
+def summarize_chat(
+    messages: list[dict],
+    max_length: int = 40,
+    max_input_chars: int = 4000,
+    temperature: float = 0.2,
+) -> str:
+    """
+    Summarize a chat conversation for sidebar display.
+
+    Args:
+        messages: List of {"role": "user"|"assistant", "content": str}
+        max_length: Maximum character length of the output summary
+        max_input_chars: Maximum characters of conversation to send to the LLM
+        temperature: LLM temperature (lower = more focused)
+
+    Returns:
+        A 2-3 word summary string for the chat sidebar
+    """
+    if not messages:
+        return "New chat"
+
+    lines = []
+    total = 0
+    for m in messages:
+        role = m.get("role") or "user"
+        content = (m.get("content") or "").strip()
+        if not content:
+            continue
+        prefix = "User:" if role == "user" else "Assistant:"
+        line = f"{prefix} {content}"
+        if total + len(line) + 1 > max_input_chars:
+            # Truncate this message to fit
+            remaining = max_input_chars - total - len(prefix) - 3
+            if remaining > 50:
+                line = f"{prefix} {content[:remaining]}..."
+            else:
+                break
+        lines.append(line)
+        total += len(line) + 1
+        if total >= max_input_chars:
+            break
+
+    if not lines:
+        return "New chat"
+
+    conversation = "\n".join(lines)
+    prompt = CHAT_SUMMARY_PROMPT_TEMPLATE.format(conversation=conversation)
+
+    llm = create_summarizer_llm(temperature=temperature)
+    try:
+        response = llm.invoke(prompt)
+        summary = response.content if hasattr(response, "content") else str(response)
+        summary = summary.strip()
+        # Enforce 2-3 words max: take first 3 words if model returned more
+        words = summary.split()
+        if len(words) > 3:
+            summary = " ".join(words[:3])
+        elif len(summary) > max_length:
+            summary = " ".join(summary.split()[:3])
+        return summary or "New chat"
+    except Exception as e:
+        raise Exception(f"Failed to summarize chat: {e}")
 
 
 def classify_article(

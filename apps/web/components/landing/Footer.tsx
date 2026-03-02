@@ -1,4 +1,4 @@
-import { GraduationCap } from "lucide-react";
+import Image from "next/image";
 
 export default function LandingFooter() {
   return (
@@ -6,7 +6,13 @@ export default function LandingFooter() {
       <div className="max-w-6xl mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <GraduationCap className="text-sage-500" size={20} />
+            <Image
+              src="/pennywise-logo.png"
+              alt="Pennywise"
+              width={20}
+              height={20}
+              className="h-5 w-auto brightness-0"
+            />
             <span className="text-sm text-gray-600">© 2026 Pennywise</span>
           </div>
           <div className="flex gap-6 text-sm text-gray-600">

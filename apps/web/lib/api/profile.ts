@@ -20,3 +20,18 @@ export async function toggleSavedArticle(articleId: string): Promise<{ saved_art
   });
 }
 
+export interface ProgressItem {
+  category: string;
+  label: string;
+  percent: number;
+}
+
+export interface LearningProgressResponse {
+  progress: ProgressItem[];
+}
+
+/** Get learning progress per category (quiz completions). */
+export async function getLearningProgress(): Promise<LearningProgressResponse> {
+  return apiFetch<LearningProgressResponse>("/me/progress", { method: "GET" });
+}
+

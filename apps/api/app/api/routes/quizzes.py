@@ -26,7 +26,7 @@ def _quiz_response(article_id: str, quiz_id: Optional[str], questions: list) -> 
         "questions": questions,
     }
 
-
+#Get article quiz
 @router.get("/article/{article_id}")
 def get_article_quiz(article_id: str, background_tasks: BackgroundTasks):
     """
@@ -35,6 +35,7 @@ def get_article_quiz(article_id: str, background_tasks: BackgroundTasks):
     Client should poll until status is 'ready' and questions are present.
     """
     quiz_resp = (
+        #Check if there´s a generated quiz for a specific article
         supabase.table("article_quizzes").select("id").eq("article_id", article_id).execute()
     )
     if quiz_resp.data:
@@ -139,7 +140,7 @@ async def regenerate_article_quiz(
     new_quiz_id = generate_quiz_for_article(article_id, for_regenerate=True)
     if not new_quiz_id:
         raise HTTPException(status_code=500, detail="Failed to generate new quiz")
-
+    #Get the quiz questions
     questions_resp = (
         supabase.table("quiz_questions")
         .select("*")

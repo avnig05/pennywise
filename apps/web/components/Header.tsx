@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Home, Compass, Bookmark, Trophy, User2, LogOut } from "lucide-react";
 import { logout } from "@/lib/auth";
@@ -18,6 +19,13 @@ export default function Header() {
     <header className="sticky top-0 z-30 bg-[var(--color-cream)]/95 backdrop-blur supports-[backdrop-filter]:bg-[var(--color-cream)]/80 border-b">
       <div className="mx-auto max-w-6xl px-6 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/pennywise-logo.png"
+            alt="Pennywise"
+            width={32}
+            height={32}
+            className="h-8 w-auto brightness-0"
+          />
           <span className="text-gray-700 font-semibold text-xl">pennywise</span>
         </Link>
         <nav className="flex items-center gap-2">

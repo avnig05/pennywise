@@ -98,3 +98,56 @@ async def toggle_saved_article(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update saved articles: {e}")
     return {"saved_articles": current}
+
+
+# Learning progress: categories that have articles (key = DB category, label = display)
+LEARNING_PROGRESS_CATEGORIES = [
+    ("savings", "Savings"),
+    ("budgeting", "Budgeting"),
+    ("taxes", "Taxes"),
+    ("investing", "Investing"),
+    ("debt_management", "Debt Management"),
+    ("banking", "Banking"),
+    ("student_loans", "Student Loans"),
+    ("credit_cards", "Credit Cards"),
+    ("credit_score", "Credit Score"),
+]
+
+
+@router.get("/progress")
+async def get_my_progress(user_id: str = Depends(get_current_user_id)):
+    """
+    Get learning progress per category. Each category has a 0–100% based on
+    quiz completions: (sum of quiz scores for that category) / (total articles in category).
+    """
+    result = []
+    for category_key, label in LEARNING_PROGRESS_CATEGORIES:
+        # Articles in this category (support snake_case and space form in DB)
+        categories_match = [category_key, category_key.replace("_", " ")]
+        art_resp = (
+            supabase.table("articles")
+            .select("id")
+            .in_("category", categories_match)
+            .execute()
+        )
+        article_ids = [r["id"] for r in (art_resp.data or [])]
+        total = len(article_ids)
+        if total == 0:
+            result.append({"category": category_key, "label": label, "percent": 0})
+            continue
+        # User completions for these articles
+        if not article_ids:
+            result.append({"category": category_key, "label": label, "percent": 0})
+            continue
+        comp_resp = (
+            supabase.table("user_article_completions")
+            .select("article_id, quiz_score")
+            .eq("user_id", user_id)
+            .in_("article_id", article_ids)
+            .execute()
+        )
+        completions = comp_resp.data or []
+        score_sum = sum(c.get("quiz_score", 0) for c in completions)
+        percent = min(100, round((score_sum / total)))
+        result.append({"category": category_key, "label": label, "percent": percent})
+    return {"progress": result}

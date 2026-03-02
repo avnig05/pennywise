@@ -60,9 +60,11 @@ const US_STATES = [
 export function StateCombobox({
   value,
   onChange,
+  onSelectAndNext,
 }: {
   value: string | null;
   onChange: (v: string) => void;
+  onSelectAndNext?: (v: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
@@ -135,6 +137,7 @@ export function StateCombobox({
                         onChange(s.code);
                         setOpen(false);
                         setSearch("");
+                        onSelectAndNext?.(s.code);
                       }}
                       className={cn(
                         "w-full cursor-pointer rounded px-3 py-2 text-left text-sm hover:bg-gray-100",

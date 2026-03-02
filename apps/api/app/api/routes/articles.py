@@ -13,6 +13,7 @@ from app.services.scraper import scrape_article
 from app.services.summarizer import summarize_article
 from app.services.chunker import chunk_text
 from app.services.embedder import get_embedding
+from app.services.article_structured import get_structured_article
 
 router = APIRouter(prefix="/articles", tags=["articles"])
 
@@ -27,6 +28,8 @@ CategoryType = Literal[
     "debt_management",
     "taxes",
     "savings",
+    "banking",
+    "credit_score",
 ]
 
 DifficultyType = Literal["beginner", "intermediate", "advanced"]
@@ -213,7 +216,9 @@ def list_articles(
     )
     
     if category:
-        query = query.eq("category", category)
+        # Match both snake_case (e.g. debt_management) and space form (e.g. debt management) from DB
+        categories_match = [category, category.replace("_", " ")]
+        query = query.in_("category", categories_match)
     if difficulty:
         query = query.eq("difficulty", difficulty)
     
@@ -227,11 +232,27 @@ def list_articles(
 def get_article(article_id: str):
     """Get a single article by ID."""
     resp = supabase.table("articles").select("*").eq("id", article_id).execute()
-    
+
     if not resp.data:
         raise HTTPException(status_code=404, detail="Article not found")
-    
+
     return resp.data[0]
+
+
+@router.get("/{article_id}/structured")
+def get_article_structured(article_id: str):
+    """Get structured article (sections + Pennywise commentary) from DB. Pre-generate with: python scripts/backfill_structured_articles.py"""
+    article_resp = supabase.table("articles").select("id").eq("id", article_id).execute()
+    if not article_resp.data:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    structured = get_structured_article(article_id)
+    if not structured:
+        raise HTTPException(
+            status_code=404,
+            detail="Structured content not found. Run: python scripts/backfill_structured_articles.py",
+        )
+    return structured
 
 
 @router.get("/{article_id}/chunks")

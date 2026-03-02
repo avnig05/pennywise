@@ -1,6 +1,7 @@
 import LoginForm from "@/components/auth/LoginForm";
-import { GraduationCap } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 
 export default function LoginPage() {
   return (
@@ -8,13 +9,21 @@ export default function LoginPage() {
       <header className="w-full py-4 px-6 bg-white border-b">
         <div className="max-w-6xl mx-auto">
           <Link href="/" className="flex items-center gap-2">
-            <GraduationCap className="text-sage-500" size={24} />
+            <Image
+              src="/pennywise-logo.png"
+              alt="Pennywise"
+              width={28}
+              height={28}
+              className="h-7 w-auto brightness-0"
+            />
             <span className="text-lg font-semibold text-gray-700">pennywise</span>
           </Link>
         </div>
       </header>
       <div className="flex-1 flex items-center justify-center px-6 py-12">
-        <LoginForm />
+        <Suspense fallback={<div className="text-sm text-gray-500">Loading…</div>}>
+          <LoginForm />
+        </Suspense>
       </div>
     </div>
   );
