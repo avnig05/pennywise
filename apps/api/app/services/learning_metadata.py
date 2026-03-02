@@ -63,8 +63,8 @@ def _award_badges(meta: dict[str, Any], today: date) -> None:
             badges[badge_id] = today_str
 
 
-def record_article_completion(user_id: str) -> dict[str, Any]:
-    """Increment articles_read + quizzes_completed, refresh streak & badges.
+def checkin(user_id: str) -> dict[str, Any]:
+    """Update streak for today's visit without touching counters.
 
     Returns the updated metadata dict.
     """
@@ -82,8 +82,6 @@ def record_article_completion(user_id: str) -> dict[str, Any]:
 
     today = date.today()
 
-    meta["articles_read"] = meta.get("articles_read", 0) + 1
-    meta["quizzes_completed"] = meta.get("quizzes_completed", 0) + 1
     _update_streak(meta, today)
     _award_badges(meta, today)
 
@@ -91,4 +89,67 @@ def record_article_completion(user_id: str) -> dict[str, Any]:
         {"learning_metadata": meta}
     ).eq("user_id", user_id).execute()
 
+    return meta
+
+
+def _load_meta(user_id: str) -> dict[str, Any]:
+    row = (
+        supabase.table("profiles")
+        .select("learning_metadata")
+        .eq("user_id", user_id)
+        .single()
+        .execute()
+    )
+    meta: dict[str, Any] = dict(row.data.get("learning_metadata") or _empty_metadata())
+    for key in _empty_metadata():
+        meta.setdefault(key, _empty_metadata()[key])
+    meta.setdefault("read_article_ids", [])
+    return meta
+
+
+def _save_meta(user_id: str, meta: dict[str, Any]) -> None:
+    supabase.table("profiles").update(
+        {"learning_metadata": meta}
+    ).eq("user_id", user_id).execute()
+
+
+def record_article_read(user_id: str, article_id: str) -> dict[str, Any]:
+    """Mark an article as read. Idempotent — duplicate calls are ignored.
+
+    Increments articles_read, updates streak & badges.
+    Returns the updated metadata dict.
+    """
+    meta = _load_meta(user_id)
+    today = date.today()
+
+    read_ids: list[str] = meta.get("read_article_ids", [])
+    if article_id not in read_ids:
+        read_ids.append(article_id)
+        meta["read_article_ids"] = read_ids
+        meta["articles_read"] = len(read_ids)
+
+    _update_streak(meta, today)
+    _award_badges(meta, today)
+    _save_meta(user_id, meta)
+    return meta
+
+
+def record_quiz_completion(user_id: str, article_id: str) -> dict[str, Any]:
+    """Record a quiz completion. Also marks the article as read if not already.
+
+    Returns the updated metadata dict.
+    """
+    meta = _load_meta(user_id)
+    today = date.today()
+
+    read_ids: list[str] = meta.get("read_article_ids", [])
+    if article_id not in read_ids:
+        read_ids.append(article_id)
+        meta["read_article_ids"] = read_ids
+        meta["articles_read"] = len(read_ids)
+
+    meta["quizzes_completed"] = meta.get("quizzes_completed", 0) + 1
+    _update_streak(meta, today)
+    _award_badges(meta, today)
+    _save_meta(user_id, meta)
     return meta

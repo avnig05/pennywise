@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Trophy } from "lucide-react";
-import { getProfile } from "@/lib/api/profile";
+import { getProfile, postCheckin } from "@/lib/api/profile";
 import type { LearningMetadata } from "@/types/profile";
 
 const DEFAULT_META: LearningMetadata = {
@@ -19,9 +19,13 @@ export default function LearningStats() {
   const [meta, setMeta] = useState<LearningMetadata>(DEFAULT_META);
 
   useEffect(() => {
-    getProfile()
-      .then((p) => setMeta({ ...DEFAULT_META, ...p.learning_metadata }))
-      .catch(() => {});
+    postCheckin()
+      .then((res) => setMeta({ ...DEFAULT_META, ...res.learning_metadata }))
+      .catch(() => {
+        getProfile()
+          .then((p) => setMeta({ ...DEFAULT_META, ...p.learning_metadata }))
+          .catch(() => {});
+      });
   }, []);
 
   const stats = [

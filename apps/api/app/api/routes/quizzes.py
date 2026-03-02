@@ -13,7 +13,7 @@ from app.services.quiz_generator import (
     mark_quiz_generation_started,
     run_quiz_generation_and_clear,
 )
-from app.services.learning_metadata import record_article_completion
+from app.services.learning_metadata import record_quiz_completion
 
 router = APIRouter(prefix="/quizzes", tags=["quizzes"])
 
@@ -117,7 +117,7 @@ async def submit_quiz(
     ).execute()
 
     if is_new_completion:
-        record_article_completion(user_id)
+        record_quiz_completion(user_id, article_id)
 
     return {
         "score": score,

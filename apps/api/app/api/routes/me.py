@@ -6,6 +6,7 @@ from app.core.auth import get_current_user_id
 from app.core.supabase_client import supabase
 from app.services.recommendations import get_recommended_articles, invalidate_recommendations_cache
 from app.services.tip_generator import get_or_generate_tip
+from app.services.learning_metadata import checkin, record_article_read
 
 router = APIRouter()
 
@@ -79,6 +80,26 @@ async def get_my_tip(user_id: str = Depends(get_current_user_id)):
     if not tip:
         raise HTTPException(status_code=404, detail="Unable to generate tip. Complete your profile.")
     return tip
+@router.post("/checkin")
+async def post_checkin(user_id: str = Depends(get_current_user_id)):
+    """Record a daily visit — updates streak without touching article/quiz counters."""
+    meta = checkin(user_id)
+    return {"learning_metadata": meta}
+
+
+class MarkReadBody(BaseModel):
+    article_id: str
+
+
+@router.post("/mark-read")
+async def mark_article_read(
+    body: MarkReadBody, user_id: str = Depends(get_current_user_id)
+):
+    """Mark an article as read. Idempotent — safe to call multiple times."""
+    meta = record_article_read(user_id, body.article_id)
+    return {"learning_metadata": meta}
+
+
 @router.post("/saved/toggle")
 async def toggle_saved_article(
     body: ToggleSavedBody, user_id: str = Depends(get_current_user_id)
