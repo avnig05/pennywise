@@ -5,7 +5,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
       <div className="flex items-center gap-2 mb-4">
-        <Image src="/pennywise-logo.png" alt="Pennywise logo" width={32} height={32} />
+        <img src="/pennywise-logo-v2.png" alt="Pennywise logo" width={32} height={32} />
         <span className="text-2xl font-semibold text-gray-800">pennywise</span>
       </div>
       <div className="text-center mb-6">
