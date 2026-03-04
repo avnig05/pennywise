@@ -32,7 +32,17 @@ export type ProfileUpdate = {
   saved_articles?: string[] | null;
 };
 
+export interface LearningMetadata {
+  articles_read: number;
+  quizzes_completed: number;
+  current_streak: number;
+  longest_streak: number;
+  last_active_date: string | null;
+  badges: Record<string, string>;
+}
+
 export type Profile = ProfileUpdate & {
   user_id?: string;
+  learning_metadata?: LearningMetadata;
 };
 

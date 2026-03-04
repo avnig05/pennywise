@@ -7,8 +7,9 @@ const protectedRoutes = [
   '/profile',
   '/saved',
   '/explore',
+  '/achievements',
   '/article',
-  '/onboarding', // Protect onboarding too
+  '/onboarding',
 ];
 
 // Routes that should redirect to dashboard if already logged in

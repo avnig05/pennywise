@@ -1,6 +1,18 @@
 import { apiFetch } from "./client";
 import type { Article } from "@/types";
 
+/** Structured section with Pennywise commentary (from GET /articles/{id}/structured). */
+export interface ArticleSection {
+  heading: string;
+  content: string;
+  commentary: string;
+}
+
+export interface StructuredArticle {
+  intro_commentary: string;
+  sections: ArticleSection[];
+}
+
 /** Full article as returned by GET /articles/{id} (includes original_content). */
 export interface FullArticle {
   id: string;
@@ -30,6 +42,14 @@ export interface ListArticle {
 
 export async function getArticle(articleId: string): Promise<FullArticle> {
   return apiFetch<FullArticle>(`/articles/${articleId}`, { method: "GET" });
+}
+
+export async function getStructuredArticle(
+  articleId: string
+): Promise<StructuredArticle> {
+  return apiFetch<StructuredArticle>(`/articles/${articleId}/structured`, {
+    method: "GET",
+  });
 }
 
 export async function listArticles(options?: {

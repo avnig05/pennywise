@@ -15,8 +15,8 @@ from app.core.supabase_client import supabase
 
 log = logging.getLogger(__name__)
 
-# Set to 0 for testing (regenerate every time), 24 for production (once per day)
-TIP_REGENERATION_HOURS = 0  # Change to 24 for production
+# How long to reuse the same tip before generating a new one (hours)
+TIP_REGENERATION_HOURS = 24
 
 TIP_PROMPT_TEMPLATE = """You are a friendly financial education assistant. Generate a personalized, actionable tip for a user based on their profile.
 
