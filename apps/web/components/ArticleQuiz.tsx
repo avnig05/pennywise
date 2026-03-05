@@ -58,8 +58,7 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
       try {
         const completion = await getArticleCompletion(articleId);
         if (cancelled) return;
-        //If completed
-        if (completion) {
+        if (completion && completion.quiz_score !== null) {
           const data = await getArticleQuiz(articleId);
           if (cancelled) return;
           setQuiz(data);

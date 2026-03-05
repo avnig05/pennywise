@@ -27,9 +27,9 @@ export interface ArticleCompletion {
   id: string;
   user_id: string;
   article_id: string;
-  quiz_score: number;
+  quiz_score: number | null;
   completed_at: string;
-  user_answers?: number[]; // User's selected answers (0-3 for each question)
+  user_answers?: number[] | null;
 }
 
 //Return article quiz

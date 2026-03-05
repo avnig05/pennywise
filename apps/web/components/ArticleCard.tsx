@@ -20,7 +20,7 @@ type Props = {
 export default function ArticleCard({ article }: Props) {
   const { isSaved, toggle } = useBookmarks();
   const [mounted, setMounted] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
+  const [status, setStatus] = useState<"unread" | "read" | "completed">("unread");
   const [completionScore, setCompletionScore] = useState<number | null>(null);
 
   useEffect(() => {
@@ -34,8 +34,12 @@ export default function ArticleCard({ article }: Props) {
       try {
         const completion = await getArticleCompletion(article.id);
         if (!cancelled && completion) {
-          setIsCompleted(true);
-          setCompletionScore(completion.quiz_score);
+          if (completion.quiz_score !== null) {
+            setStatus("completed");
+            setCompletionScore(completion.quiz_score);
+          } else {
+            setStatus("read");
+          }
         }
       } catch {
         // Ignore errors - article might not have a quiz yet
@@ -66,7 +70,7 @@ export default function ArticleCard({ article }: Props) {
   return (
     <div
       className={`group rounded-2xl p-6 shadow-[var(--shadow-sm)] transition hover:shadow-[var(--shadow-md)] ${
-        isCompleted
+        status === "completed"
           ? "border border-green-200 bg-gradient-to-br from-green-50/80 to-emerald-50/80"
           : "border border-[var(--border-color)] bg-[var(--bg-card)]"
       }`}
@@ -82,7 +86,13 @@ export default function ArticleCard({ article }: Props) {
           <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs capitalize text-gray-700">
             {article.difficulty}
           </span>
-          {isCompleted && (
+          {status === "read" && (
+            <span className="flex items-center gap-1 rounded-lg bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+              <BookOpen className="h-3.5 w-3.5" />
+              Read
+            </span>
+          )}
+          {status === "completed" && (
             <span className="flex items-center gap-1 rounded-lg bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Completed
@@ -104,7 +114,7 @@ export default function ArticleCard({ article }: Props) {
         {description}
       </p>
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        {isCompleted && completionScore !== null && (
+        {status === "completed" && completionScore !== null && (
           <span className="rounded-lg bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
             Score: {completionScore}%
           </span>
@@ -114,7 +124,7 @@ export default function ArticleCard({ article }: Props) {
           className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-sage)] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90 hover:shadow-md"
         >
           <BookOpen size={16} />
-          {isCompleted ? "Review article" : "Read"}
+          {status === "completed" ? "Review article" : status === "read" ? "Continue" : "Read"}
         </Link>
       </div>
     </div>

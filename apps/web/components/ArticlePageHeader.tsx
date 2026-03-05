@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, Bookmark, BookmarkCheck, Share2 } from "lucide-react";
+import { ArrowLeft, Bookmark, BookmarkCheck, BookOpen, CheckCircle2, Share2 } from "lucide-react";
 import { useBookmarks } from "@/lib/bookmarks";
+import { getArticleCompletion } from "@/lib/api/quizzes";
 import { useState, useEffect } from "react";
 
 type Props = {
@@ -26,7 +27,18 @@ export default function ArticlePageHeader({
 }: Props) {
   const { isSaved, toggle } = useBookmarks();
   const [mounted, setMounted] = useState(false);
+  const [status, setStatus] = useState<"unread" | "read" | "completed">("unread");
+
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    getArticleCompletion(articleId).then((c) => {
+      if (c) {
+        setStatus(c.quiz_score !== null ? "completed" : "read");
+      }
+    });
+  }, [articleId, mounted]);
 
   const saved = mounted ? isSaved(articleId) : false;
 
@@ -90,6 +102,18 @@ export default function ArticlePageHeader({
         <span className="text-xs capitalize text-[var(--text-meta)]">
           {difficulty}
         </span>
+        {mounted && status === "read" && (
+          <span className="flex items-center gap-1 rounded-lg bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+            <BookOpen className="h-3.5 w-3.5" />
+            Read
+          </span>
+        )}
+        {mounted && status === "completed" && (
+          <span className="flex items-center gap-1 rounded-lg bg-green-100 px-2.5 py-1 text-xs font-medium text-green-700">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Completed
+          </span>
+        )}
       </div>
 
       <h1 className="mt-4 text-2xl font-bold leading-tight text-[var(--text-title)] sm:text-3xl">
