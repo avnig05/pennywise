@@ -367,7 +367,7 @@ export default function OnboardingForm() {
       <StepIndicator currentStep={stepIndex} totalSteps={totalSteps} />
       <div>
         <h2 className="text-lg font-semibold">{currentStep.title}</h2>
-        {currentStep.body()}
+        {currentStep.body(isLastStep ? undefined : handleNext)}
       </div>
       {validationError ? (
         <p className="text-sm text-red-600">{validationError}</p>
