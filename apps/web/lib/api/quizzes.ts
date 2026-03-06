@@ -4,7 +4,6 @@ export interface QuizQuestion {
   id: string;
   question_text: string;
   options: string[];
-  correct_answer_index: number;
   question_order: number;
 }
 
@@ -21,6 +20,9 @@ export interface QuizResult {
   total_questions: number;
   correct_answers: number;
   completed: boolean;
+  results: boolean[];
+  /** Sent only after submit / in quiz-results so we can show correct answer for wrong questions */
+  correct_answer_indices: number[];
 }
 
 export interface ArticleCompletion {
@@ -67,4 +69,14 @@ export async function regenerateArticleQuiz(articleId: string): Promise<Quiz> {
   return apiFetch<Quiz>(`/quizzes/article/${articleId}/regenerate`, {
     method: "POST",
   });
+}
+
+/** Per-question correct/wrong and correct indices for completed quiz (to show correct answer when wrong). */
+export async function getArticleQuizResults(
+  articleId: string
+): Promise<{ results: boolean[]; correct_answer_indices: number[] }> {
+  return apiFetch<{ results: boolean[]; correct_answer_indices: number[] }>(
+    `/me/article/${articleId}/quiz-results`,
+    { method: "GET" }
+  );
 }
