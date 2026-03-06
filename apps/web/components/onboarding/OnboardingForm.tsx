@@ -343,6 +343,7 @@ export default function OnboardingForm() {
   };
 
   const handleBack = () => {
+    setValidationError(null);
     setStepIndex((prev) => Math.max(prev - 1, 0));
   };
 
