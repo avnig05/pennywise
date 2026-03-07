@@ -121,6 +121,47 @@ async def toggle_saved_article(
     return {"saved_articles": current}
 
 
+@router.get("/article/{article_id}/quiz-results")
+async def get_article_quiz_results(article_id: str, user_id: str = Depends(get_current_user_id)):
+    """
+    Return per-question correct/wrong for the user's completed quiz.
+    Never sends correct_answer_index to the client.
+    """
+    comp_resp = (
+        supabase.table("user_article_completions")
+        .select("user_answers")
+        .eq("user_id", user_id)
+        .eq("article_id", article_id)
+        .execute()
+    )
+    if not comp_resp.data or not comp_resp.data[0].get("user_answers"):
+        raise HTTPException(status_code=404, detail="No completion found for this article.")
+    user_answers = comp_resp.data[0]["user_answers"] or []
+
+    quiz_resp = (
+        supabase.table("article_quizzes").select("id").eq("article_id", article_id).execute()
+    )
+    if not quiz_resp.data:
+        raise HTTPException(status_code=404, detail="Quiz not found.")
+    quiz_id = quiz_resp.data[0]["id"]
+    questions_resp = (
+        supabase.table("quiz_questions")
+        .select("correct_answer_index, question_order")
+        .eq("quiz_id", quiz_id)
+        .order("question_order")
+        .execute()
+    )
+    questions = questions_resp.data or []
+    if len(user_answers) != len(questions):
+        raise HTTPException(status_code=400, detail="Completion does not match current quiz.")
+    results = [
+        i < len(user_answers) and user_answers[i] == q.get("correct_answer_index")
+        for i, q in enumerate(questions)
+    ]
+    correct_answer_indices = [q.get("correct_answer_index") for q in questions]
+    return {"results": results, "correct_answer_indices": correct_answer_indices}
+
+
 # Learning progress: categories that have articles (key = DB category, label = display)
 LEARNING_PROGRESS_CATEGORIES = [
     ("savings", "Savings"),

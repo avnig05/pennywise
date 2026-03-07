@@ -43,7 +43,7 @@ def get_article_quiz(article_id: str, background_tasks: BackgroundTasks):
         quiz_id = quiz_resp.data[0]["id"]
         questions_resp = (
             supabase.table("quiz_questions")
-            .select("*")
+            .select("id, quiz_id, question_text, options, question_order")
             .eq("quiz_id", quiz_id)
             .order("question_order")
             .execute()
@@ -88,11 +88,11 @@ async def submit_quiz(
             status_code=400,
             detail=f"Expected {len(questions)} answers, got {len(submission.answers)}",
         )
-    correct = sum(
-        1
+    results = [
+        i < len(submission.answers) and submission.answers[i] == q["correct_answer_index"]
         for i, q in enumerate(questions)
-        if i < len(submission.answers) and submission.answers[i] == q["correct_answer_index"]
-    )
+    ]
+    correct = sum(1 for r in results if r)
     total = len(questions)
     score = int((correct / total) * 100) if total else 0
 
@@ -119,11 +119,14 @@ async def submit_quiz(
     if is_new_completion:
         record_quiz_completion(user_id, article_id)
 
+    correct_answer_indices = [q["correct_answer_index"] for q in questions]
     return {
         "score": score,
         "total_questions": total,
         "correct_answers": correct,
         "completed": True,
+        "results": results,
+        "correct_answer_indices": correct_answer_indices,
     }
 
 
@@ -155,10 +158,10 @@ async def regenerate_article_quiz(
     new_quiz_id = generate_quiz_for_article(article_id, for_regenerate=True)
     if not new_quiz_id:
         raise HTTPException(status_code=500, detail="Failed to generate new quiz")
-    #Get the quiz questions
+    # Return questions without correct_answer_index so client never sees it
     questions_resp = (
         supabase.table("quiz_questions")
-        .select("*")
+        .select("id, quiz_id, question_text, options, question_order")
         .eq("quiz_id", new_quiz_id)
         .order("question_order")
         .execute()

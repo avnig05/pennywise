@@ -7,6 +7,7 @@ import {
   getArticleQuiz,
   submitQuizAnswers,
   getArticleCompletion,
+  getArticleQuizResults,
   regenerateArticleQuiz,
   type Quiz,
   type QuizQuestion,
@@ -27,6 +28,8 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [questionResults, setQuestionResults] = useState<boolean[] | null>(null);
+  const [correctAnswerIndices, setCorrectAnswerIndices] = useState<number[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const resultSectionRef = useRef<HTMLDivElement>(null);
   const shouldScrollToResultRef = useRef(false);
@@ -71,6 +74,18 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
           setIsCompleted(true);
           setScore(completion.quiz_score);
           setSubmitted(true);
+          try {
+            const { results, correct_answer_indices } = await getArticleQuizResults(articleId);
+            if (!cancelled) {
+              setQuestionResults(results);
+              setCorrectAnswerIndices(correct_answer_indices);
+            }
+          } catch {
+            if (!cancelled) {
+              setQuestionResults(null);
+              setCorrectAnswerIndices(null);
+            }
+          }
           setLoading(false);
           return;
         }
@@ -144,8 +159,9 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
       setSubmitting(true);
       // Send answers to API to calculate score and save completion
       const result = await submitQuizAnswers(articleId, answers);
-      // Update component state with results and mark as completed
       setScore(result.score);
+      setQuestionResults(result.results);
+      setCorrectAnswerIndices(result.correct_answer_indices);
       setSubmitted(true);
       setIsCompleted(true);
       shouldScrollToResultRef.current = true;
@@ -168,6 +184,8 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
       setSubmitted(false);
       setIsCompleted(false);
       setScore(null);
+      setQuestionResults(null);
+      setCorrectAnswerIndices(null);
       onComplete?.();
     } catch (e) {
       console.error("Failed to generate new quiz:", e);
@@ -288,50 +306,58 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
           </div>
         </div>
 
-        {/* Quiz with answers shown */}
+        {/* Quiz with answers shown; when wrong, show the correct answer */}
         <div className="rounded-2xl border bg-white p-8">
           <h2 className="mb-6 text-xl font-semibold text-gray-900">Your answers</h2>
 
           {quiz.questions.map((question, qIdx) => {
             const userAnswer = answers[qIdx];
-            const isCorrect = userAnswer === question.correct_answer_index;
+            const isCorrect = questionResults != null && questionResults[qIdx];
+            const correctIdx = correctAnswerIndices != null ? correctAnswerIndices[qIdx] : undefined;
             return (
               <div key={question.id} className="mb-8">
                 <div className="mb-3 flex items-center gap-2">
                   <h3 className="text-lg font-medium text-gray-900">
                     {qIdx + 1}. {question.question_text}
                   </h3>
-                  {isCorrect ? (
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 shrink-0 text-red-500" />
-                  )}
+                  {questionResults != null &&
+                    (isCorrect ? (
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 shrink-0 text-red-500" />
+                    ))}
                 </div>
                 <div className="space-y-3">
                   {question.options.map((option, optIdx) => {
                     const isSelected = userAnswer === optIdx;
-                    const isCorrectAnswer = optIdx === question.correct_answer_index;
-                    const isWrongSelected = isSelected && !isCorrectAnswer;
+                    const showCorrect = isSelected && questionResults != null && questionResults[qIdx];
+                    const showWrong = isSelected && questionResults != null && !questionResults[qIdx];
+                    const showCorrectAnswer =
+                      !isCorrect &&
+                      correctIdx !== undefined &&
+                      correctIdx === optIdx;
 
                     return (
                       <div
                         key={optIdx}
                         className={`w-full rounded-lg border-2 p-4 ${
-                          isCorrectAnswer
+                          showCorrect
                             ? "border-green-500 bg-green-50"
-                            : isWrongSelected
+                            : showWrong
                             ? "border-red-500 bg-red-50"
+                            : showCorrectAnswer
+                            ? "border-green-500 bg-green-50"
                             : "border-gray-200 bg-gray-50"
                         }`}
                       >
                         <div className="flex items-center gap-3">
                           <div
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 ${
-                              isSelected
-                                ? isCorrectAnswer
-                                  ? "border-green-500 bg-green-500 text-white"
-                                  : "border-red-500 bg-red-500 text-white"
-                                : isCorrectAnswer
+                              showCorrect
+                                ? "border-green-500 bg-green-500 text-white"
+                                : showWrong
+                                ? "border-red-500 bg-red-500 text-white"
+                                : showCorrectAnswer
                                 ? "border-green-500 bg-green-100 text-green-700"
                                 : "border-gray-300 bg-white text-gray-600"
                             }`}
@@ -339,24 +365,26 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
                             {String.fromCharCode(65 + optIdx)}
                           </div>
                           <span
-                            className={`${
-                              isCorrectAnswer
+                            className={
+                              showCorrect
                                 ? "font-medium text-green-900"
-                                : isWrongSelected
+                                : showWrong
                                 ? "text-red-900"
+                                : showCorrectAnswer
+                                ? "font-medium text-green-900"
                                 : "text-gray-700"
-                            }`}
+                            }
                           >
                             {option}
                           </span>
-                          {isCorrectAnswer && (
-                            <span className="ml-auto text-xs font-semibold text-green-700">
-                              Correct answer
-                            </span>
-                          )}
-                          {isWrongSelected && (
+                          {showWrong && (
                             <span className="ml-auto text-xs font-semibold text-red-700">
                               Your answer
+                            </span>
+                          )}
+                          {showCorrectAnswer && (
+                            <span className="ml-auto text-xs font-semibold text-green-700">
+                              Correct answer
                             </span>
                           )}
                         </div>
@@ -420,8 +448,8 @@ export default function ArticleQuiz({ articleId, onComplete }: Props) {
           <div className="space-y-3">
             {question.options.map((option, optIdx) => {
               const isSelected = answers[qIdx] === optIdx;
-              const isCorrect = submitted && optIdx === question.correct_answer_index;
-              const isWrong = submitted && isSelected && optIdx !== question.correct_answer_index;
+              const isCorrect = submitted && questionResults != null && questionResults[qIdx] && isSelected;
+              const isWrong = submitted && isSelected && questionResults != null && !questionResults[qIdx];
               return (
                 <button
                   key={optIdx}
