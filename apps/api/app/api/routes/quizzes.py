@@ -98,12 +98,12 @@ async def submit_quiz(
 
     existing = (
         supabase.table("user_article_completions")
-        .select("id")
+        .select("id, quiz_score")
         .eq("user_id", user_id)
         .eq("article_id", article_id)
         .execute()
     )
-    is_new_completion = not existing.data
+    already_has_quiz = existing.data and existing.data[0].get("quiz_score") is not None
 
     completion_data = {
         "user_id": user_id,
@@ -116,7 +116,7 @@ async def submit_quiz(
         on_conflict="user_id,article_id",
     ).execute()
 
-    if is_new_completion:
+    if not already_has_quiz:
         record_quiz_completion(user_id, article_id)
 
     correct_answer_indices = [q["correct_answer_index"] for q in questions]

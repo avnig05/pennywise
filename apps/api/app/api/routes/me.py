@@ -95,7 +95,23 @@ class MarkReadBody(BaseModel):
 async def mark_article_read(
     body: MarkReadBody, user_id: str = Depends(get_current_user_id)
 ):
-    """Mark an article as read. Idempotent — safe to call multiple times."""
+    """Mark an article as read. Inserts a row in user_article_completions with
+    null quiz_score/user_answers. Idempotent — safe to call multiple times."""
+    existing = (
+        supabase.table("user_article_completions")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("article_id", body.article_id)
+        .execute()
+    )
+    if not existing.data:
+        supabase.table("user_article_completions").insert({
+            "user_id": user_id,
+            "article_id": body.article_id,
+            "quiz_score": None,
+            "user_answers": None,
+        }).execute()
+
     meta = record_article_read(user_id, body.article_id)
     return {"learning_metadata": meta}
 
