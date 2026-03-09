@@ -5,10 +5,17 @@ export default function LandingHero() {
   return (
     <section className="w-full py-16 px-6 bg-white">
       <div className="max-w-4xl mx-auto text-center">
+<<<<<<< HEAD
         <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-3">
           Master your money.
         </h1>
         <h1 className="text-5xl md:text-6xl font-bold text-sage-500 mb-6">
+=======
+        <h1 className="text-7xl md:text-8xl font-bold text-gray-800 mb-3">
+          Master your money.
+        </h1>
+        <h1 className="text-7xl md:text-8xl font-bold text-sage-500 mb-6">
+>>>>>>> main
           Build your future.
         </h1>
         <p className="text-gray-600 text-lg max-w-2xl mx-auto mb-8">

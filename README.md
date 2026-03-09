@@ -44,12 +44,12 @@ Create apps/web/.env.local with the following content:
 .env.local is gitignored. Do not commit it.
 
 ```md
-API env (required for Supabase-backed endpoints like `/me`):
+API env (required for Supabase-backed endpoints):
 Create `apps/api/.env` (gitignored) with:
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `DEV_USER_ID` (UUID from Supabase Auth Users)
+- `GEMINI_API_KEY` (for AI recommendations)
 
 ### API quick test (PowerShell)
 
@@ -65,12 +65,12 @@ Invoke-RestMethod -Method Put -Uri "http://localhost:8000/me" `
   -ContentType "application/json" `
   -Body '{"job_type":"w2","state":"CA","pay_frequency":"biweekly","net_income_range":"1500_2500","rent_status":"rent","debt_status":"none","credit_card_status":"use_sometimes","emergency_buffer_range":"lt_500","priority":"save"}'
 
-### How user data is stored (dev mode)
+### How user data is stored
 
-For now, we store Supabase connection credentials in `apps/api/.env` (gitignored).  
-The backend uses `DEV_USER_ID` to simulate an authenticated user.
+Supabase connection credentials are stored in `apps/api/.env` (gitignored).  
+The backend now requires proper authentication to extract the user's `user_id`.
 
-When the frontend (or a test client) sends a `PUT /me` request, the API updates the profile for that user into the `profiles` table in Supabase.  
+When the frontend sends a `PUT /me` request with proper authentication, the API updates the profile for that user in the `profiles` table in Supabase.  
 You can then confirm it was saved by calling `GET /me`.
 
-> Note: `DEV_USER_ID` is temporary. It will be replaced by real authentication (Supabase Auth), where each user has their own `user_id`.
+> Note: Authentication middleware needs to be implemented to extract `user_id` from Supabase Auth tokens.

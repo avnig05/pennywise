@@ -1,9 +1,10 @@
 """
 Quick script to test the recommendations service.
-Run from apps/api: python scripts/test_recommendations.py
+Run from apps/api: python scripts/test_recommendations.py <user_id>
 
-Requires: .env with DEV_USER_ID (must match a profile in Supabase), GEMINI_API_KEY,
-          and Supabase credentials. Articles must exist (keywords column recommended).
+Requires: .env with GEMINI_API_KEY and Supabase credentials. 
+          Articles must exist (keywords column recommended).
+          Provide a user_id as command-line argument.
 """
 
 import json
@@ -13,25 +14,25 @@ from pathlib import Path
 # Add parent directory so we can import app
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.core.config import DEV_USER_ID, require_env
 from app.services.recommendations import get_recommended_articles, get_profile, get_articles_for_recommendation
 
 
 def main():
     print("Testing recommendations service...\n")
 
-    # 1. Resolve user
-    try:
-        user_id = require_env("DEV_USER_ID", DEV_USER_ID)
-        print(f"DEV_USER_ID: {user_id}")
-    except RuntimeError as e:
-        print(f"Config error: {e}")
+    # 1. Get user_id from command line
+    if len(sys.argv) < 2:
+        print("Usage: python scripts/test_recommendations.py <user_id>")
+        print("Example: python scripts/test_recommendations.py 550e8400-e29b-41d4-a716-446655440000")
         sys.exit(1)
+    
+    user_id = sys.argv[1]
+    print(f"Testing for user_id: {user_id}")
 
     # 2. Check profile exists
     profile = get_profile(user_id)
     if not profile:
-        print("No profile found for this user_id. Create a profile (e.g. complete onboarding) or set DEV_USER_ID to a user that has one.")
+        print(f"No profile found for user_id={user_id}. User needs to complete onboarding first.")
         sys.exit(1)
     print(f"Profile found (e.g. priority={profile.get('priority')}, interests={profile.get('interests')})\n")
 

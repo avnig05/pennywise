@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Compass, Bookmark, User2 } from "lucide-react";
+import { Home, Compass, Bookmark, User2, LogOut } from "lucide-react";
+import { logout } from "@/lib/auth";
 
 const nav = [
-  { href: "/", label: "Dashboard", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/explore", label: "Explore", icon: Compass },
   { href: "/saved", label: "Saved", icon: Bookmark },
   { href: "/profile", label: "Profile", icon: User2 }
@@ -41,9 +42,13 @@ export default function Header() {
             );
           })}
         </nav>
-        <div className="rounded-full border p-2 text-gray-700">
-          <User2 size={18} />
-        </div>
+        <button
+          onClick={() => logout()}
+          className="rounded-full border p-2 text-gray-700 hover:bg-gray-100 transition-colors"
+          title="Logout"
+        >
+          <LogOut size={18} />
+        </button>
       </div>
     </header>
   );

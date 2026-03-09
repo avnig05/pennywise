@@ -22,18 +22,59 @@ export default function SignUpForm() {
     setError(null);
     try {
       const supabase = getSupabase();
+<<<<<<< HEAD
       const { error: err } = await supabase.auth.signUp({ email, password });
+=======
+      const { data, error: err } = await supabase.auth.signUp({ 
+        email, 
+        password,
+        options: {
+          data: {
+            name: name, // Store name in user metadata
+          }
+        }
+      });
+      
+>>>>>>> main
       if (err) {
         setError(err.message);
         setLoading(false);
         return;
       }
+<<<<<<< HEAD
       document.cookie = `onboarding-complete=false; path=/; max-age=${60 * 60 * 24 * 30}`;
       router.replace('/onboarding');
     } catch {
       document.cookie = `sb-access-token=dev_${Date.now()}; path=/; max-age=${60 * 60 * 24 * 7}`;
       document.cookie = `onboarding-complete=false; path=/; max-age=${60 * 60 * 24 * 30}`;
       router.replace('/onboarding');
+=======
+
+      // Check if we got a session with access token
+      if (data.session && data.session.access_token) {
+        // Session is established, token is automatically stored by Supabase client
+        console.log("✅ User signed up successfully with session");
+        
+        // Store the access token in a cookie for the backend
+        document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+        document.cookie = `onboarding-complete=false; path=/; max-age=${60 * 60 * 24 * 30}`;
+        
+        // Small delay to ensure cookies are set
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Force full page reload so global providers (e.g. bookmarks) refetch user data
+        window.location.href = '/onboarding';
+      } else {
+        // Email confirmation required - show message
+        setError("Please check your email to confirm your account before continuing.");
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+>>>>>>> main
     }
   };
 

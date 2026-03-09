@@ -59,17 +59,6 @@ export default async function ArticlePage({ params }: Props) {
             </div>
           )}
         </header>
-
-        <div className="prose prose-gray mt-8 max-w-none">
-          {article.original_content ? (
-            <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-              {article.original_content}
-            </div>
-          ) : (
-            <p className="text-gray-500">No content available for this article.</p>
-          )}
-        </div>
-
         <ArticleQuiz articleId={id} />
       </article>
       <ChatButton />

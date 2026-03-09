@@ -6,6 +6,13 @@ import { Article } from "@/types";
 import { useBookmarks } from "@/lib/bookmarks";
 import { getArticleCompletion } from "@/lib/api/quizzes";
 
+const MAX_DESCRIPTION_CHARS = 400;
+
+function truncateDescription(text: string, maxChars: number): string {
+  if (!text || text.length <= maxChars) return text;
+  return text.slice(0, maxChars).trim() + "...";
+}
+
 type Props = {
   article: Article;
 };
@@ -45,14 +52,20 @@ export default function ArticleCard({ article }: Props) {
   const saved = mounted ? isSaved(article.id) : false;
 
   // Short excerpt for card (full summary is on the article page)
-  const maxDescLen = 120;
+  const maxDescLen = 300;
   const description =
     article.description.length <= maxDescLen
       ? article.description
       : article.description.slice(0, maxDescLen).trim().replace(/\s+\S*$/, "") + "…";
 
   return (
-    <div className="group rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md">
+    <div
+      className={`group rounded-2xl border p-5 shadow-sm transition hover:shadow-md ${
+        isCompleted
+          ? "border-green-400 bg-gradient-to-br from-green-50 to-emerald-50"
+          : "bg-white"
+      }`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <span className="rounded-full border px-3 py-1 text-xs text-gray-700">{article.category}</span>
@@ -72,7 +85,7 @@ export default function ArticleCard({ article }: Props) {
         </button>
       </div>
       <h3 className="mt-4 text-lg font-semibold text-gray-900">{article.title}</h3>
-      <p className="mt-2 text-sm text-gray-700 line-clamp-2">{description}</p>
+      <p className="mt-2 text-sm text-gray-700 line-clamp-4">{description}</p>
       <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
         <span>{article.readTimeMin} min read</span>
         <span className="rounded-full border px-2 py-1 text-xs">{article.difficulty}</span>
@@ -86,7 +99,7 @@ export default function ArticleCard({ article }: Props) {
           className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-sage)] px-3 py-2 text-sm font-medium text-white transition hover:opacity-90"
         >
           <BookOpen size={16} />
-          Read
+          {isCompleted ? "Review article" : "Read"}
         </Link>
       </div>
     </div>
