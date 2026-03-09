@@ -1,26 +1,26 @@
 import Link from "next/link";
-<<<<<<< HEAD
-import { GraduationCap } from "lucide-react";
-=======
 import Image from "next/image";
->>>>>>> main
 import { Button } from "@/components/ui/button";
 
 export default function Header() {
   return (
-    <header className="w-full py-4 px-6 bg-white">
+    <header className="w-full py-4 px-6" style={{ backgroundColor: '#a2c7bf' }}>
       <div className="max-w-6xl mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2">
-<<<<<<< HEAD
-          <GraduationCap className="text-sage-500" size={24} />
-          <span className="text-lg font-semibold text-gray-700">pennywise</span>
-=======
-          <Image src="/pennywise-logo.png" alt="Pennywise logo" width={52} height={52} />
-          <span className="text-xl font-semibold text-gray-700">pennywise</span>
->>>>>>> main
+        <div className="flex items-center gap-3">
+          <Image
+            src="/pennywise-logo.png"
+            alt="Pennywise"
+            width={64}
+            height={64}
+            className="h-16 w-auto brightness-0"
+          />
+          <span className="text-2xl font-serif font-medium tracking-wide text-dark-teal">Pennywise</span>
         </div>
-        <Link href="/login">
-          <Button className="px-6">Login</Button>
+        <Link
+          href="/login"
+          className="px-6 py-2.5 bg-white/15 backdrop-blur-md text-[#2d5755] rounded-full font-medium hover:bg-white/25 transition-all border border-white/30 shadow-sm"
+        >
+          Login
         </Link>
       </div>
     </header>

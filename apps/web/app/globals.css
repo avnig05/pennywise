@@ -291,3 +291,26 @@ html {
   .mesh-bg { animation: none; }
   .scroll-indicator-dot { animation: none; }
 }
+
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    /* Moves by 1/3 since we tripled the array for safety */
+    transform: translateX(calc(-100% / 3));
+  }
+}
+
+.animate-scroll {
+  display: flex;
+  width: max-content;
+  animation: scroll 30s linear infinite;
+}
+
+/* Optional: Smooth out motion on high refresh rate monitors */
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll {
+    animation-play-state: paused;
+  }
+}
