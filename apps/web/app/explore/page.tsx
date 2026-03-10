@@ -1,7 +1,6 @@
 'use client';
 import ArticleCard from "@/components/ArticleCard";
 import CategoryBadge from "@/components/CategoryBadge";
-import ChatButton from "@/components/ChatButton";
 import { listArticles, listArticleToArticle } from "@/lib/api/articles";
 import type { Article } from "@/types";
 import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
@@ -209,7 +208,6 @@ export default function ExplorePage() {
           )}
         </div>
       </section>
-      <ChatButton />
     </main>
   );
 }

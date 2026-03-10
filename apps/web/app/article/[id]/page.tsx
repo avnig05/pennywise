@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { getArticle } from "@/lib/api/articles";
-import ChatButton from "@/components/ChatButton";
 import ArticlePageHeader from "@/components/ArticlePageHeader";
 import ArticlePageBody from "@/components/ArticlePageBody";
 
@@ -40,7 +39,6 @@ export default async function ArticlePage({ params }: Props) {
           fallbackSummary={article.summary}
         />
       </article>
-      <ChatButton />
     </main>
   );
 }

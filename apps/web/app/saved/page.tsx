@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import ChatButton from "@/components/ChatButton";
 import ArticleCard from "@/components/ArticleCard";
 import { useBookmarks } from "@/lib/bookmarks";
 import { getArticle, fullArticleToArticle } from "@/lib/api/articles";
@@ -64,7 +63,6 @@ export default function SavedPage() {
           )}
         </div>
       </section>
-      <ChatButton />
     </main>
   );
 }

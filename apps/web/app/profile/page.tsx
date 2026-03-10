@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import ChatButton from "@/components/ChatButton";
 import ProfileEditor from '@/components/ProfileEditor';
 import { UserRound, Mail, Calendar } from "lucide-react";
 import { getSupabase } from '@/lib/supabaseClient';
@@ -87,7 +86,6 @@ export default function ProfilePage() {
           </Button>
         </div>
       </section>
-      <ChatButton />
     </main>
   );
 }

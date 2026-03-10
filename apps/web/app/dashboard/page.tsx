@@ -1,5 +1,4 @@
 import { Suspense } from "react";
-import ChatButton from "@/components/ChatButton";
 import LearningStats from "@/components/LearningStats";
 import RecommendedArticles from "./RecommendedArticles";
 import TipOfTheDay from "./TipOfTheDay";
@@ -35,7 +34,6 @@ export default function Dashboard() {
           <RecommendedArticles />
         </div>
       </section>
-      <ChatButton />
     </main>
   );
 }
