@@ -14,7 +14,7 @@ export default function RecommendedArticles() {
 
   useEffect(() => {
     let cancelled = false;
-    getFeed(5)
+    getFeed(6)
       .then(({ articles: feedArticles }) => {
         if (!cancelled) {
           setArticles(feedArticles.map(feedArticleToArticle));
