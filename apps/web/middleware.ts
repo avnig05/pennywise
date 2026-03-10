@@ -28,6 +28,7 @@ function isAuthenticated(request: NextRequest): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuth = isAuthenticated(request);
+  const onboardingComplete = request.cookies.get('onboarding-complete')?.value;
 
   // Check if current path is protected
   const isProtectedRoute = protectedRoutes.some(route => 
@@ -48,24 +49,27 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users from auth pages to dashboard
-  if (isAuthRoute && isAuth) {
+  // Redirect authenticated users who already finished onboarding away from auth pages
+  if (isAuthRoute && isAuth && onboardingComplete === 'true') {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users from landing page to dashboard
-  if (pathname === '/' && isAuth) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+  // Prevent access to protected routes (like dashboard) until onboarding is finished
+  if (isProtectedRoute && isAuth && pathname !== '/onboarding') {
+    if (onboardingComplete === 'false') {
+      const url = request.nextUrl.clone();
+      url.pathname = '/onboarding';
+      // Preserve original destination so we could optionally use it later
+      url.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(url);
+    }
   }
 
   // Redirect users who already completed onboarding away from onboarding page
   if (pathname.startsWith('/onboarding') && isAuth) {
-    const onboardingComplete = request.cookies.get('onboarding-complete');
-    if (onboardingComplete?.value === 'true') {
+    if (onboardingComplete === 'true') {
       const url = request.nextUrl.clone();
       url.pathname = '/dashboard';
       return NextResponse.redirect(url);
