@@ -15,9 +15,10 @@ function truncateDescription(text: string, maxChars: number): string {
 
 type Props = {
   article: Article;
+  from?: string;
 };
 
-export default function ArticleCard({ article }: Props) {
+export default function ArticleCard({ article, from }: Props) {
   const { isSaved, toggle } = useBookmarks();
   const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<"unread" | "read" | "completed">("unread");
@@ -120,7 +121,7 @@ export default function ArticleCard({ article }: Props) {
           </span>
         )}
         <Link
-          href={`/article/${article.id}`}
+          href={`/article/${article.id}${from ? `?from=${from}` : ""}`}
           className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-sage)] px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:opacity-90 hover:shadow-md"
         >
           <BookOpen size={16} />
