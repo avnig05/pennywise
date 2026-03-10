@@ -1,24 +1,37 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { Sparkles } from "lucide-react";
 
 export default function LandingFinalCTA() {
   return (
-    <section className="w-full py-20 px-6 bg-white">
-      <div className="max-w-3xl mx-auto text-center">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+    /* Background matches the feature section's transition wave color */
+    <section className="relative w-full pt-32 pb-48 bg-[#f6eee3] overflow-hidden">
+      
+      {/* Centered Content Area */}
+      <div className="max-w-4xl mx-auto text-center relative z-10 px-6">
+        
+        {/* Serif heading matching hero style */}
+        <h2 className="font-serif text-5xl md:text-6xl font-serif text-[#1A302B] mb-6">
           Ready to take control?
         </h2>
-        <p className="text-gray-600 text-lg mb-8">
+        
+        <p className="font-sans text-[#4B5E5A] text-lg md:text-xl mb-12 opacity-90">
           Join thousands of students building their financial future.
         </p>
+
+        {/* The soft-glow 'Get Started' button */}
         <Link
           href="/signup"
-          className="inline-flex items-center bg-sage-500 hover:bg-sage-600 text-white px-8 py-6 text-base rounded-full font-medium"
+          className="font-sans inline-block bg-[#a2c7bf] hover:bg-[#7D9A91] text-white px-10 py-5 rounded-full font-bold text-lg shadow-xl shadow-[#8EABA2]/20 transition-all hover:scale-105 active:scale-95"
         >
           Get Started
-          <ArrowRight className="ml-2" size={18} />
         </Link>
       </div>
+
+      {/* Little Sparkle Accent positioned as seen in the design */}
+      <div className="absolute bottom-24 right-[10%] text-[#A18A5E] opacity-40 hidden md:block">
+        <Sparkles size={48} />
+      </div>
+
     </section>
   );
 }
