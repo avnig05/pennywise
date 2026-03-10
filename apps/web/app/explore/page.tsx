@@ -174,7 +174,7 @@ export default function ExplorePage() {
             <>
               <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
                 {paginatedArticles.map((article) => (
-                  <ArticleCard key={article.id} article={article} />
+                  <ArticleCard key={article.id} article={article} from="explore" />
                 ))}
               </div>
               {totalPages > 1 && (

@@ -14,6 +14,7 @@ type Props = {
   title: string;
   sourceName: string | null;
   sourceUrl: string | null;
+  from?: string;
 };
 
 export default function ArticlePageHeader({
@@ -24,6 +25,7 @@ export default function ArticlePageHeader({
   title,
   sourceName,
   sourceUrl,
+  from,
 }: Props) {
   const { isSaved, toggle } = useBookmarks();
   const [mounted, setMounted] = useState(false);
@@ -64,15 +66,24 @@ export default function ArticlePageHeader({
     }
   };
 
+  const backHref =
+    from === "explore" ? "/explore" : from === "saved" ? "/saved" : "/dashboard";
+  const backLabel =
+    from === "explore"
+      ? "Back to Explore"
+      : from === "saved"
+        ? "Back to Saved"
+        : "Back to Dashboard";
+
   return (
     <>
       <div className="flex items-center justify-between">
         <Link
-          href="/dashboard"
+          href={backHref}
           className="inline-flex items-center gap-2 text-sm text-[var(--text-nav)]"
         >
           <ArrowLeft size={16} />
-          Back to Dashboard
+          {backLabel}
         </Link>
         <div className="flex items-center gap-3 text-[var(--text-nav)]">
           <button

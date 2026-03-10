@@ -5,10 +5,12 @@ import ArticlePageBody from "@/components/ArticlePageBody";
 
 type Props = {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ from?: string }>;
 };
 
-export default async function ArticlePage({ params }: Props) {
+export default async function ArticlePage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { from } = await searchParams;
   let article;
   try {
     article = await getArticle(id);
@@ -33,6 +35,7 @@ export default async function ArticlePage({ params }: Props) {
           title={article.title}
           sourceName={article.source_name}
           sourceUrl={article.source_url}
+          from={from}
         />
         <ArticlePageBody
           articleId={id}

@@ -57,7 +57,7 @@ export default function SavedPage() {
           {showGrid && (
             <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-2">
               {articles.map((article) => (
-                <ArticleCard key={article.id} article={article} />
+                <ArticleCard key={article.id} article={article} from="saved" />
               ))}
             </div>
           )}
