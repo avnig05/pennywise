@@ -132,7 +132,7 @@ export default function SignUpForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <p className="text-xs text-gray-500">Must be at least 6 characters</p>
+            <p className="text-xs text-gray-500">Must be at least 8 characters</p>
           </div>
           {error && <p className="text-sm text-red-600">{error}</p>}
           <Button type="submit" className="w-full py-6 rounded-full text-base font-medium" disabled={loading}>
