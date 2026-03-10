@@ -24,20 +24,38 @@ STRUCTURED_PROMPT_TEMPLATE = """Output ONLY a valid JSON object. No explanation,
 Use this exact structure. Replace the placeholder values with content from the article below.
 
 {{
-  "intro_commentary": "Hey there! 👋 I'm Pennywise. [One short intro sentence about the topic.]",
+  "intro_commentary": "[One short intro about the topic — see variety rules below]",
   "sections": [
     {{
       "heading": "Clear section title (e.g. Introduction: Why This Matters)",
       "content": "2-4 paragraphs explaining this part of the article. Define terms, include examples or numbers from the article.",
-      "commentary": "One short friendly tip or analogy (1-2 sentences, optional emoji)."
+      "commentary": "[One short Pennywise comment — vary the style; see rules below]"
     }}
   ]
 }}
 
 Requirements:
-- Create 4-7 sections. Each section needs a distinct "heading" and "content" and "commentary".
+- Create 4-7 sections. Each section needs a distinct "heading", "content", and "commentary".
 - Headings must be descriptive (e.g. "Simple vs Compound Interest", "Understanding APR and APY").
-- Content = the main explanation (multiple sentences per section). Commentary = one short Pennywise tip.
+- Content = the main explanation (multiple sentences per section). Commentary = one short Pennywise line (1-2 sentences).
+
+VARIETY FOR INTRO_COMMENTARY (pick ONE style per article; do not repeat the same opener every time):
+- Greeting + hook: "Hey there! This one's worth a quick read." / "Hi! Here's the lowdown on [topic]." / "Glad you're here — this topic comes up a lot."
+- Direct: "Quick heads-up: [one sentence about why this matters]." / "Let's break this down so it actually sticks."
+- Warm: "Welcome. This article covers [topic] in plain language." / "You're in the right place. Here's what you need to know."
+- Casual: "So, [topic]. Here's the short version." / "Ever wondered about [topic]? Here we go."
+Use 0-1 emoji in the intro. Do not always say "I'm Pennywise" — sometimes just start with the hook.
+
+VARIETY FOR EACH SECTION'S COMMENTARY (use a MIX of these across sections; do not make every commentary the same type):
+- Practical tip: "Pro tip: start with a small amount and bump it up each month."
+- Real-world analogy: "Think of it like [simple comparison]."
+- Question: "Why does this matter? Because [one line]."
+- Caution: "Watch out for [common mistake] — it's easy to miss."
+- Encouragement: "This part's simpler than it looks once you see the pattern."
+- Key takeaway: "The big idea: [one sentence in plain language]."
+- Relatable: "Lots of people skip this step; don't be one of them."
+- Why it matters: "Getting this right can save you [time/money/hassle] down the road."
+Vary tone and length (some punchy, some a bit longer). Use emoji sparingly (0-1 per commentary, or none). Never repeat the same commentary formula for two sections in a row.
 
 Article title: {title}
 
