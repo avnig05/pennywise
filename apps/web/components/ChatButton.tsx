@@ -1,7 +1,8 @@
 "use client";
 
-import { MessageCircle, X, Send, Loader2, Plus, Trash2 } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import { MessageCircle, X, Send, Loader2, Plus, Trash2, GripVertical } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   askChat,
   listChats,
@@ -11,6 +12,10 @@ import {
   type Message,
   type ChatSource,
 } from "@/lib/api/chat";
+
+const CHAT_PANEL_MIN_WIDTH = 320;
+const CHAT_PANEL_MAX_WIDTH = 896; // max-w-4xl
+const CHAT_PANEL_WIDTH_STORAGE_KEY = "pennywise-chat-panel-width";
 
 function formatTime(dateStr: string) {
   const d = new Date(dateStr);
@@ -43,8 +48,23 @@ function parseStepsFromContent(content: string): string[] | null {
   return null;
 }
 
+function getStoredPanelWidth(): number {
+  if (typeof window === "undefined") return CHAT_PANEL_MAX_WIDTH;
+  try {
+    const stored = localStorage.getItem(CHAT_PANEL_WIDTH_STORAGE_KEY);
+    if (stored) {
+      const w = parseInt(stored, 10);
+      if (!Number.isNaN(w) && w >= CHAT_PANEL_MIN_WIDTH && w <= CHAT_PANEL_MAX_WIDTH) return w;
+    }
+  } catch {
+    // ignore
+  }
+  return CHAT_PANEL_MAX_WIDTH;
+}
+
 export default function ChatButton() {
   const [open, setOpen] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(CHAT_PANEL_MAX_WIDTH);
   const [chats, setChats] = useState<ChatListItem[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -53,6 +73,54 @@ export default function ChatButton() {
   const [loadingChats, setLoadingChats] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const isResizingRef = useRef(false);
+
+  // Restore panel width from localStorage when component mounts
+  useEffect(() => {
+    setPanelWidth(getStoredPanelWidth());
+  }, []);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    isResizingRef.current = true;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const startRight = panel.getBoundingClientRect().right;
+    const startWidth = panelWidth;
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      if (!isResizingRef.current) return;
+      const newWidth = Math.round(
+        Math.min(CHAT_PANEL_MAX_WIDTH, Math.max(CHAT_PANEL_MIN_WIDTH, startRight - moveEvent.clientX))
+      );
+      setPanelWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      isResizingRef.current = false;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    document.body.style.cursor = "ew-resize";
+    document.body.style.userSelect = "none";
+  }, [panelWidth]);
+
+  // Persist width when it changes (after drag ends we already do it in onMouseUp, but we need to persist the final panelWidth - so we need to save in onMouseUp using the latest state. Actually the issue is in onMouseUp we're closing over the initial panelWidth. Let me save to localStorage inside the mousemove when we setPanelWidth, or we could save in a useEffect when panelWidth changes. Saving in useEffect when panelWidth changes is cleaner - we persist whenever width changes.
+  useEffect(() => {
+    if (!open) return;
+    try {
+      localStorage.setItem(CHAT_PANEL_WIDTH_STORAGE_KEY, String(panelWidth));
+    } catch {
+      // ignore
+    }
+  }, [open, panelWidth]);
 
   useEffect(() => {
     if (open) loadChats();
@@ -146,12 +214,12 @@ export default function ChatButton() {
     }
   }
 
-  return (
+  const content = (
     <>
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[var(--color-sage)] px-4 py-3 text-white shadow-lg transition hover:shadow-xl"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-[var(--color-sage)] px-4 py-3 text-white shadow-lg transition hover:shadow-xl"
         aria-label="Ask Pennywise"
       >
         <MessageCircle size={18} />
@@ -160,15 +228,33 @@ export default function ChatButton() {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6">
-          <div className="absolute inset-0 bg-black/20" aria-hidden onClick={() => setOpen(false)} />
-          <div className="relative flex h-[85vh] w-full max-w-4xl flex-col rounded-2xl border bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b px-4 py-3">
+          <div className="absolute inset-0 bg-black/5" aria-hidden onClick={() => setOpen(false)} />
+          <div
+            ref={panelRef}
+            className="relative flex h-[85vh] flex-col rounded-2xl border border-white/40 shadow-xl shadow-black/10 chat-panel-gradient"
+            style={{ width: Math.min(panelWidth, typeof window !== "undefined" ? window.innerWidth - 32 : panelWidth) }}
+          >
+            {/* Resize handle on the left edge */}
+            <div
+              role="separator"
+              aria-orientation="vertical"
+              aria-valuenow={panelWidth}
+              aria-valuemin={CHAT_PANEL_MIN_WIDTH}
+              aria-valuemax={CHAT_PANEL_MAX_WIDTH}
+              tabIndex={0}
+              onMouseDown={handleResizeStart}
+              className="absolute left-0 top-0 z-10 flex h-full w-3 cursor-ew-resize items-center justify-center rounded-l-2xl border-r border-white/30 transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-[var(--color-sage)] focus:ring-inset"
+              title="Drag to resize"
+            >
+              <GripVertical size={14} className="text-gray-500" strokeWidth={2} />
+            </div>
+            <div className="flex items-center justify-between border-b border-white/40 px-4 py-3 chat-panel-header-gradient rounded-t-2xl pl-6">
               <h2 className="font-semibold text-gray-900">Ask Pennywise</h2>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={handleNewChat}
-                  className="rounded p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  className="rounded p-1.5 text-gray-500 hover:bg-white/50 hover:text-gray-700"
                   aria-label="New conversation"
                   title="New conversation"
                 >
@@ -177,7 +263,7 @@ export default function ChatButton() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  className="rounded p-1 text-gray-500 hover:bg-white/50 hover:text-gray-700"
                   aria-label="Close"
                 >
                   <X size={20} />
@@ -186,7 +272,7 @@ export default function ChatButton() {
             </div>
 
             <div className="flex flex-1 overflow-hidden rounded-b-2xl">
-              <div className="w-64 shrink-0 overflow-y-auto rounded-bl-2xl border-r bg-gray-50">
+              <div className="w-64 shrink-0 overflow-y-auto rounded-bl-2xl border-r border-white/40 chat-panel-sidebar-gradient">
                 <div className="p-3">
                   <h3 className="mb-2 text-xs font-semibold uppercase text-gray-500">Conversations</h3>
                   {loadingChats ? (
@@ -200,7 +286,7 @@ export default function ChatButton() {
                           key={chat.id}
                           onClick={() => setCurrentChatId(chat.id)}
                           className={`group flex cursor-pointer items-center justify-between rounded-lg p-2 text-sm transition ${
-                            currentChatId === chat.id ? "bg-[var(--color-sage)]/10 text-gray-900" : "hover:bg-gray-100 text-gray-700"
+                            currentChatId === chat.id ? "bg-[var(--color-sage)]/20 text-gray-900" : "hover:bg-white/30 text-gray-700"
                           }`}
                         >
                           <div className="min-w-0 flex-1">
@@ -224,7 +310,7 @@ export default function ChatButton() {
 
               <div className="flex flex-1 flex-col">
                 <div className="flex-1 overflow-y-auto px-4 py-3">
-                  {error && <div className="mb-3 rounded bg-red-50 p-2 text-sm text-red-700">{error}</div>}
+                  {error && <div className="mb-3 rounded border border-red-200/50 bg-red-50/80 p-2 text-sm text-red-700 backdrop-blur-md">{error}</div>}
                   {messages.length === 0 && !loading && (
                     <p className="text-sm text-gray-500">
                       {currentChatId ? "Type something to get started." : "Select a conversation or type to create a new one."}
@@ -238,7 +324,9 @@ export default function ChatButton() {
                       <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                         <div
                           className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                            msg.role === "user" ? "bg-[var(--color-sage)] text-white" : "bg-gray-100 text-gray-800"
+                            msg.role === "user"
+                              ? "bg-[var(--color-sage)] text-white"
+                              : "border border-white/50 bg-white/70 text-gray-800"
                           }`}
                         >
                           {stepsToShow && stepsToShow.length > 0 ? (
@@ -275,7 +363,7 @@ export default function ChatButton() {
                     })}
                     {loading && (
                       <div className="flex justify-start">
-                        <div className="rounded-lg bg-gray-100 px-3 py-2">
+                        <div className="rounded-lg border border-white/50 bg-white/70 px-3 py-2">
                           <Loader2 size={16} className="animate-spin text-gray-500" />
                         </div>
                       </div>
@@ -283,7 +371,7 @@ export default function ChatButton() {
                     <div ref={messagesEndRef} />
                   </div>
                 </div>
-                <form onSubmit={handleSubmit} className="border-t p-4">
+                <form onSubmit={handleSubmit} className="border-t border-white/40 p-4 chat-panel-header-gradient">
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -309,4 +397,10 @@ export default function ChatButton() {
       )}
     </>
   );
+
+  // Portal to body bypasses any ancestor transform/filter that breaks position:fixed
+  if (typeof document !== "undefined") {
+    return createPortal(content, document.body);
+  }
+  return content;
 }

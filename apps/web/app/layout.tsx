@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import ConditionalHeader from "@/components/ConditionalHeader";
+import ConditionalChatButton from "@/components/ConditionalChatButton";
 import { BookmarkProvider } from "@/lib/bookmarks";
 
 const geistSans = Geist({
@@ -37,6 +38,7 @@ export default function RootLayout({
         <BookmarkProvider>
           <ConditionalHeader />
           {children}
+          <ConditionalChatButton />
         </BookmarkProvider>
       </body>
     </html>

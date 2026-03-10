@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { BookOpen, HelpCircle, Flame, Trophy } from "lucide-react";
-import ChatButton from "@/components/ChatButton";
 import { getProfile, postCheckin } from "@/lib/api/profile";
 import type { LearningMetadata } from "@/types/profile";
 
@@ -213,7 +212,6 @@ export default function AchievementsPage() {
           </div>
         </div>
       </section>
-      <ChatButton />
     </main>
   );
 }
