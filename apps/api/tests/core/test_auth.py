@@ -8,7 +8,6 @@ from app.core import auth
 
 
 def _make_request() -> Request:
-    # Minimal ASGI scope for Request; headers/cookies are provided via parameters, not scope
     return Request({"type": "http"})
 
 

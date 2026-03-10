@@ -20,6 +20,12 @@ OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434").rstrip(
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
 # How long to reuse cached recommendations before recomputing (seconds). Default 24h.
 RECOMMENDATIONS_CACHE_TTL_SECONDS = int(os.getenv("RECOMMENDATIONS_CACHE_TTL_SECONDS", "86400"))
+
+# Email verification (signup)
+RESEND_API_KEY = os.getenv("RESEND_API_KEY", "").strip()
+VERIFICATION_FROM_EMAIL = os.getenv("VERIFICATION_FROM_EMAIL", "Pennywise <onboarding@resend.dev>")
+VERIFICATION_CODE_EXPIRY_MINUTES = int(os.getenv("VERIFICATION_CODE_EXPIRY_MINUTES", "15"))
+
 print(f"GEMINI_API_KEY loaded: {'Yes' if GEMINI_API_KEY else 'No (empty)'}")
 print(f"RAG backend: {RAG_LLM_BACKEND}")
 

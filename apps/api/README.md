@@ -19,6 +19,15 @@ GEMINI_API_KEY=...  # For embeddings + optional Gemini RAG backend
 API_PORT=8000
 ```
 
+### Email verification (signup)
+To send verification codes to new users, add:
+```env
+RESEND_API_KEY=...       # From resend.com/api-keys (optional: if unset, codes are logged only)
+VERIFICATION_FROM_EMAIL=... # e.g. "Pennywise <noreply@yourdomain.com>" (default: Resend onboarding address)
+VERIFICATION_CODE_EXPIRY_MINUTES=15
+```
+Create the `email_verification_codes` table in Supabase by running the SQL in `docs/email_verification_table.sql`.
+
 ## RAG Chatbot
 
 The `/chat/ask` endpoint answers questions using your article chunks (embeddings required).

@@ -1,21 +1,24 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getSupabase } from '@/lib/supabaseClient';
-import { useRouter } from 'next/navigation';
+
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? '';
 
 export default function SignUpForm() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [step, setStep] = useState<'form' | 'verify'>('form');
+  const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
@@ -43,50 +46,71 @@ export default function SignUpForm() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSendCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      const res = await fetch(`${API_BASE}/auth/send-verification-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.detail ?? 'Failed to send verification code.');
+        return;
+      }
+      setSuccessMessage('Check your email for the 6-digit code.');
+      setStep('verify');
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyAndCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const supabase = getSupabase();
-      const { data, error: err } = await supabase.auth.signUp({ 
-        email, 
-        password,
-        options: {
-          data: {
-            name: name, // Store name in user metadata
-          }
-        }
+      const res = await fetch(`${API_BASE}/auth/verify-and-create-account`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          code: code.trim(),
+          password,
+          name: name.trim() || null,
+        }),
       });
-      
-      if (err) {
-        setError(err.message);
-        setLoading(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.detail ?? 'Invalid or expired code. Request a new one.');
         return;
       }
-
-      // Check if we got a session with access token
-      if (data.session && data.session.access_token) {
-        // Session is established, token is automatically stored by Supabase client
-        console.log("✅ User signed up successfully with session");
-        
-        // Store the access token in a cookie for the backend
-        document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${60 * 60 * 24 * 7}`;
+      const supabase = getSupabase();
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (signInErr) {
+        setError('Account created but sign-in failed. Try signing in with your email and password.');
+        return;
+      }
+      const session = (await supabase.auth.getSession()).data.session;
+      if (session?.access_token) {
+        document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${60 * 60 * 24 * 7}`;
         document.cookie = `onboarding-complete=false; path=/; max-age=${60 * 60 * 24 * 30}`;
-        
-        // Small delay to ensure cookies are set
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-        // Force full page reload so global providers (e.g. bookmarks) refetch user data
+        await new Promise((r) => setTimeout(r, 100));
         window.location.href = '/onboarding';
       } else {
-        // Email confirmation required - show message
-        setError("Please check your email to confirm your account before continuing.");
-        setLoading(false);
+        setError('Account created. Please sign in with your email and password.');
       }
-    } catch (error) {
-      console.error("Signup error:", error);
-      setError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+    } catch {
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -96,50 +120,93 @@ export default function SignUpForm() {
     <div className="w-full max-w-md">
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Create your account</h1>
-          <p className="text-gray-600">Start your financial education journey today</p>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            {step === 'form' ? 'Create your account' : 'Verify your email'}
+          </h1>
+          <p className="text-gray-600">
+            {step === 'form'
+              ? 'Start your financial education journey today'
+              : `We sent a 6-digit code to ${email}`}
+          </p>
         </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <p className="text-xs text-gray-500">Must be at least 8 characters</p>
-          </div>
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Button type="submit" className="w-full py-6 rounded-full text-base font-medium" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Account'}
-            <ArrowRight className="ml-2" size={18} />
-          </Button>
-        </form>
+
+        {step === 'form' ? (
+          <form onSubmit={handleSendCode} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="John Doe"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <p className="text-xs text-gray-500">Must be at least 8 characters</p>
+            </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            <Button type="submit" className="w-full py-6 rounded-full text-base font-medium" disabled={loading}>
+              {loading ? 'Sending...' : 'Send verification code'}
+              <Mail className="ml-2" size={18} />
+            </Button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyAndCreate} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="code">Verification code</Label>
+              <Input
+                id="code"
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                placeholder="000000"
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                maxLength={6}
+                required
+                className="text-center text-lg tracking-widest"
+              />
+              <p className="text-xs text-gray-500">
+                Code sent to {email}. Expires in 15 minutes.
+              </p>
+            </div>
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {successMessage && <p className="text-sm text-green-600">{successMessage}</p>}
+            <Button type="submit" className="w-full py-6 rounded-full text-base font-medium" disabled={loading}>
+              {loading ? 'Creating account...' : 'Verify and create account'}
+              <ArrowRight className="ml-2" size={18} />
+            </Button>
+            <button
+              type="button"
+              onClick={() => { setStep('form'); setCode(''); setError(null); setSuccessMessage(null); }}
+              className="w-full text-sm text-gray-500 hover:text-gray-700"
+            >
+              Use a different email
+            </button>
+          </form>
+        )}
         <div className="relative my-8">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-200"></div>
