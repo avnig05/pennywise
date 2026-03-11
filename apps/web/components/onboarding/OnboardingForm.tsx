@@ -20,6 +20,25 @@ import { updateProfile } from "../../lib/api/profile";
 
 type FormState = ProfileUpdate & { interests: string[] };
 
+type RadioGroupOption<T extends string> = {
+  value: T;
+  label: string;
+};
+
+type RadioGroupProps<T extends string> = {
+  name: string;
+  value: T | null | undefined;
+  options: RadioGroupOption<T>[];
+  onChange: (value: T) => void;
+  onSelectAndNext?: (value: T) => void;
+};
+
+type CheckboxGroupProps = {
+  value: string[];
+  options: string[];
+  onChange: (value: string[]) => void;
+};
+
 const AGE_OPTIONS: RadioGroupOption<AgeRange>[] = [
   { value: "lt_18", label: "Under 18" },
   { value: "18_24", label: "18-24" },
@@ -99,7 +118,6 @@ const INTEREST_OPTIONS = [
   "Side income",
 ];
 
-
 export default function OnboardingForm() {
   const router = useRouter();
   const [stepIndex, setStepIndex] = useState(0);
@@ -130,8 +148,14 @@ export default function OnboardingForm() {
             name="age_range"
             value={formState.age_range}
             options={AGE_OPTIONS}
-            onChange={(value) => setFormState((prev) => ({ ...prev, age_range: value }))}
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ age_range: v }) : undefined}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, age_range: value }))
+            }
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ age_range: v })
+                : undefined
+            }
           />
         ),
       },
@@ -143,8 +167,14 @@ export default function OnboardingForm() {
             name="job_type"
             value={formState.job_type}
             options={JOB_TYPE_OPTIONS}
-            onChange={(value) => setFormState((prev) => ({ ...prev, job_type: value }))}
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ job_type: v }) : undefined}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, job_type: value }))
+            }
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ job_type: v })
+                : undefined
+            }
           />
         ),
       },
@@ -157,7 +187,9 @@ export default function OnboardingForm() {
             onChange={(value) =>
               setFormState((prev) => ({ ...prev, state: value }))
             }
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ state: v }) : undefined}
+            onSelectAndNext={
+              onSelectAndNext ? (v) => onSelectAndNext({ state: v }) : undefined
+            }
           />
         ),
       },
@@ -169,8 +201,14 @@ export default function OnboardingForm() {
             name="pay_frequency"
             value={formState.pay_frequency}
             options={PAY_FREQUENCY_OPTIONS}
-            onChange={(value) => setFormState((prev) => ({ ...prev, pay_frequency: value }))}
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ pay_frequency: v }) : undefined}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, pay_frequency: value }))
+            }
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ pay_frequency: v })
+                : undefined
+            }
           />
         ),
       },
@@ -182,8 +220,14 @@ export default function OnboardingForm() {
             name="net_income_range"
             value={formState.net_income_range}
             options={INCOME_OPTIONS}
-            onChange={(value) => setFormState((prev) => ({ ...prev, net_income_range: value }))}
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ net_income_range: v }) : undefined}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, net_income_range: value }))
+            }
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ net_income_range: v })
+                : undefined
+            }
           />
         ),
       },
@@ -195,8 +239,14 @@ export default function OnboardingForm() {
             name="rent_status"
             value={formState.rent_status}
             options={RENT_STATUS_OPTIONS}
-            onChange={(value) => setFormState((prev) => ({ ...prev, rent_status: value }))}
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ rent_status: v }) : undefined}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, rent_status: value }))
+            }
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ rent_status: v })
+                : undefined
+            }
           />
         ),
       },
@@ -208,8 +258,14 @@ export default function OnboardingForm() {
             name="debt_status"
             value={formState.debt_status}
             options={DEBT_STATUS_OPTIONS}
-            onChange={(value) => setFormState((prev) => ({ ...prev, debt_status: value }))}
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ debt_status: v }) : undefined}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, debt_status: value }))
+            }
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ debt_status: v })
+                : undefined
+            }
           />
         ),
       },
@@ -224,7 +280,11 @@ export default function OnboardingForm() {
             onChange={(value) =>
               setFormState((prev) => ({ ...prev, credit_card_status: value }))
             }
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ credit_card_status: v }) : undefined}
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ credit_card_status: v })
+                : undefined
+            }
           />
         ),
       },
@@ -237,9 +297,16 @@ export default function OnboardingForm() {
             value={formState.emergency_buffer_range}
             options={EMERGENCY_BUFFER_OPTIONS}
             onChange={(value) =>
-              setFormState((prev) => ({ ...prev, emergency_buffer_range: value }))
+              setFormState((prev) => ({
+                ...prev,
+                emergency_buffer_range: value,
+              }))
             }
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ emergency_buffer_range: v }) : undefined}
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ emergency_buffer_range: v })
+                : undefined
+            }
           />
         ),
       },
@@ -251,8 +318,14 @@ export default function OnboardingForm() {
             name="priority"
             value={formState.priority}
             options={PRIORITY_OPTIONS}
-            onChange={(value) => setFormState((prev) => ({ ...prev, priority: value }))}
-            onSelectAndNext={onSelectAndNext ? (v) => onSelectAndNext({ priority: v }) : undefined}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, priority: value }))
+            }
+            onSelectAndNext={
+              onSelectAndNext
+                ? (v) => onSelectAndNext({ priority: v })
+                : undefined
+            }
           />
         ),
       },
@@ -263,7 +336,9 @@ export default function OnboardingForm() {
           <CheckboxGroup
             options={INTEREST_OPTIONS}
             value={formState.interests}
-            onChange={(value) => setFormState((prev) => ({ ...prev, interests: value }))}
+            onChange={(value) =>
+              setFormState((prev) => ({ ...prev, interests: value }))
+            }
           />
         ),
       },
@@ -292,7 +367,9 @@ export default function OnboardingForm() {
       case "debt_status":
         return state.debt_status ? null : "Please select a debt option.";
       case "credit_card_status":
-        return state.credit_card_status ? null : "Please select a credit card option.";
+        return state.credit_card_status
+          ? null
+          : "Please select a credit card option.";
       case "emergency_buffer_range":
         return state.emergency_buffer_range
           ? null
@@ -312,13 +389,16 @@ export default function OnboardingForm() {
     if (!state.state) {
       return true;
     }
+
     setIsSaving(true);
     setError(null);
+
     try {
       await updateProfile(state);
       return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to save answers";
+      const message =
+        err instanceof Error ? err.message : "Failed to save answers";
       setError(message);
       return false;
     } finally {
@@ -335,7 +415,9 @@ export default function OnboardingForm() {
       return;
     }
     setValidationError(null);
-    if (overrides) setFormState((prev) => ({ ...prev, ...overrides }));
+    if (overrides) {
+      setFormState((prev) => ({ ...prev, ...overrides }));
+    }
     const ok = await persist(stateToUse);
     if (ok) {
       setStepIndex((prev) => Math.min(prev + 1, totalSteps - 1));
@@ -349,7 +431,7 @@ export default function OnboardingForm() {
 
   return (
     <form
-      className="space-y-6"
+      className="flex h-full w-full flex-col gap-2.5"
       onSubmit={async (event) => {
         event.preventDefault();
         const validationMessage = validateStep();
@@ -360,96 +442,127 @@ export default function OnboardingForm() {
         setValidationError(null);
         const ok = await persist();
         if (ok) {
-          document.cookie = `onboarding-complete=true; path=/; max-age=${60 * 60 * 24 * 30}`;
+          document.cookie = `onboarding-complete=true; path=/; max-age=${
+            60 * 60 * 24 * 30
+          }`;
           router.push("/dashboard");
         }
       }}
     >
-      <StepIndicator currentStep={stepIndex} totalSteps={totalSteps} />
-      <div>
-        <h2 className="text-lg font-semibold">{currentStep.title}</h2>
-        {currentStep.body(isLastStep ? undefined : handleNext)}
+      <div className="shrink-0">
+        <StepIndicator currentStep={stepIndex} totalSteps={totalSteps} />
       </div>
-      {validationError ? (
-        <p className="text-sm text-red-600">{validationError}</p>
-      ) : error ? (
-        <p className="text-sm text-red-600">{error}</p>
-      ) : null}
-      <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          className="cursor-pointer rounded-md border px-4 py-2 text-sm"
-          onClick={handleBack}
-          disabled={stepIndex === 0}
-        >
-          Back
-        </button>
-        <button
-          type={isLastStep ? "submit" : "button"}
-          className="cursor-pointer rounded-md bg-neutral-900 px-4 py-2 text-sm text-white disabled:opacity-60"
-          onClick={isLastStep ? undefined : () => void handleNext()}
-          disabled={isSaving}
-        >
-          {isSaving ? "Saving..." : isLastStep ? "Finish" : "Next"}
-        </button>
+
+      <div className="flex min-h-0 flex-1 flex-col rounded-[24px] border border-[#d7dfdc] bg-white/88 p-4 shadow-[0_12px_32px_rgba(1,40,37,0.06)] md:p-4">
+        <div className="shrink-0">
+          <p className="mb-1.5 text-[10px] font-medium uppercase tracking-[0.18em] text-[#173b37]/65">
+            Personalize your experience
+          </p>
+          <h2 className="font-serif text-[2.7rem] font-bold leading-[0.95] text-[#012825] md:text-[3rem]">
+            {currentStep.title}
+          </h2>
+        </div>
+
+        <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+          {currentStep.body(isLastStep ? undefined : handleNext)}
+        </div>
+
+        {validationError ? (
+          <p className="mt-2 shrink-0 text-xs font-medium text-red-700">
+            {validationError}
+          </p>
+        ) : error ? (
+          <p className="mt-2 shrink-0 text-xs font-medium text-red-700">
+            {error}
+          </p>
+        ) : null}
+
+        <div className="mt-3 flex shrink-0 items-center justify-between gap-3">
+          <button
+            type="button"
+            className="rounded-full border border-[#b8c8c3] bg-white/85 px-4 py-2 text-sm font-medium text-[#012825] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={handleBack}
+            disabled={stepIndex === 0}
+          >
+            Back
+          </button>
+
+          <button
+            type={isLastStep ? "submit" : "button"}
+            className="rounded-full bg-[#012825] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#0b3a35] disabled:cursor-not-allowed disabled:opacity-60"
+            onClick={isLastStep ? undefined : () => void handleNext()}
+            disabled={isSaving}
+          >
+            {isSaving ? "Saving..." : isLastStep ? "Finish" : "Next"}
+          </button>
+        </div>
       </div>
     </form>
   );
 }
 
-type RadioGroupOption<T extends string> = {
-  value: T;
-  label: string;
-};
-
-type RadioGroupProps<T extends string> = {
-  name: string;
-  value: T | null | undefined;
-  options: RadioGroupOption<T>[];
-  onChange: (value: T) => void;
-  onSelectAndNext?: (value: T) => void;
-};
-
-function RadioGroup<T extends string>({ name, value, options, onChange, onSelectAndNext }: RadioGroupProps<T>) {
+function RadioGroup<T extends string>({
+  name,
+  value,
+  options,
+  onChange,
+  onSelectAndNext,
+}: RadioGroupProps<T>) {
   const handleChange = (optionValue: T) => {
     onChange(optionValue);
     onSelectAndNext?.(optionValue);
   };
+
   return (
-    <div className="mt-4 space-y-3">
-      {options.map((option) => (
-        <label key={option.value} className="flex cursor-pointer items-center gap-3 text-sm">
-          <input
-            type="radio"
-            name={name}
-            value={option.value}
-            checked={value === option.value}
-            onChange={() => handleChange(option.value)}
-          />
-          <span>{option.label}</span>
-        </label>
-      ))}
+    <div className="grid gap-2">
+      {options.map((option) => {
+        const checked = value === option.value;
+
+        return (
+          <label
+            key={option.value}
+            className={`flex min-h-[50px] cursor-pointer items-center gap-3 rounded-[16px] border px-4 py-3 text-sm transition ${
+              checked
+                ? "border-[#012825] bg-[#f4f8f6] shadow-sm"
+                : "border-[#d9e2de] bg-white hover:border-[#9cb6ae]"
+            }`}
+          >
+            <input
+              type="radio"
+              name={name}
+              value={option.value}
+              checked={checked}
+              onChange={() => handleChange(option.value)}
+              className="h-4 w-4 shrink-0 accent-[#012825]"
+            />
+            <span className="font-medium text-[#173b37]">{option.label}</span>
+          </label>
+        );
+      })}
     </div>
   );
 }
 
-type CheckboxGroupProps = {
-  value: string[];
-  options: string[];
-  onChange: (value: string[]) => void;
-};
-
 function CheckboxGroup({ value, options, onChange }: CheckboxGroupProps) {
   return (
-    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-2 sm:grid-cols-2">
       {options.map((option) => {
         const checked = value.includes(option);
+
         return (
-          <label key={option} className="flex items-center gap-3 text-sm">
+          <label
+            key={option}
+            className={`flex min-h-[50px] cursor-pointer items-center gap-3 rounded-[16px] border px-4 py-3 text-sm transition ${
+              checked
+                ? "border-[#012825] bg-[#f4f8f6] shadow-sm"
+                : "border-[#d9e2de] bg-white hover:border-[#9cb6ae]"
+            }`}
+          >
             <input
               type="checkbox"
               value={option}
               checked={checked}
+              className="h-4 w-4 shrink-0 accent-[#012825]"
               onChange={() => {
                 if (checked) {
                   onChange(value.filter((item) => item !== option));
@@ -458,7 +571,7 @@ function CheckboxGroup({ value, options, onChange }: CheckboxGroupProps) {
                 }
               }}
             />
-            <span>{option}</span>
+            <span className="font-medium text-[#173b37]">{option}</span>
           </label>
         );
       })}
