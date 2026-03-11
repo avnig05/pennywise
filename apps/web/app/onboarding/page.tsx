@@ -27,15 +27,9 @@ export default async function OnboardingPage() {
         <section className="flex min-h-0 flex-col items-center justify-center">
           <div className="w-full max-w-[520px] text-center">
             <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.24em] text-[#173b37]/70">
-              Onboarding
+      
             </p>
 
-            <h1 className="font-serif text-[3.9rem] font-bold leading-[0.95] tracking-[-0.03em] text-[#012825] sm:text-[4.3rem] md:text-[4rem]">
-              <span className="block md:hidden">Personalize your money plan.</span>
-              <span className="hidden md:block">Personalize</span>
-              <span className="hidden md:block">your money</span>
-              <span className="hidden md:block">plan.</span>
-            </h1>
 
             <div className="mt-2 font-serif text-[3.2rem] italic font-semibold leading-[0.95] tracking-[-0.03em] text-[#928b5b] sm:text-[3.7rem] md:text-[3.35rem]">
               <span className="block md:hidden">Make Pennywise yours.</span>
