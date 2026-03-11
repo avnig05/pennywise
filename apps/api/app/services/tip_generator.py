@@ -51,7 +51,7 @@ def _create_llm(temperature: float = 0.8) -> ChatGoogleGenerativeAI:
     """Create LLM instance for tip generation. Higher temperature (0.8) for more variety."""
     api_key = require_env("GEMINI_API_KEY", GEMINI_API_KEY)
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-lite",
         google_api_key=api_key,
         temperature=temperature,
     )

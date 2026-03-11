@@ -148,7 +148,7 @@ def _parse_steps_from_response(text: str) -> Optional[list[str]]:
     return None
 
 
-def _create_llm(model: str = "gemini-2.5-flash") -> ChatGoogleGenerativeAI:
+def _create_llm(model: str = "gemini-2.5-flash-lite") -> ChatGoogleGenerativeAI:
     api_key = require_env("GEMINI_API_KEY", GEMINI_API_KEY)
     return ChatGoogleGenerativeAI(
         model=model,
@@ -164,9 +164,9 @@ def _is_429(e: Exception) -> bool:
 
 def _invoke_llm_with_retry_and_fallback(prompt: str):
     """
-    Use gemini-2.5-flash with one retry on 429. Returns LLM response, or None if quota exhausted.
+    Use gemini-2.5-flash-lite with one retry on 429. Returns LLM response, or None if quota exhausted.
     """
-    llm = _create_llm("gemini-2.5-flash")
+    llm = _create_llm("gemini-2.5-flash-lite")
     for attempt in range(2):
         try:
             return llm.invoke(prompt)

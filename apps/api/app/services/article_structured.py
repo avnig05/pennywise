@@ -94,7 +94,7 @@ def _invoke_gemini(prompt: str) -> Optional[str]:
     """Invoke Gemini for structured article generation."""
     api_key = require_env("GEMINI_API_KEY", GEMINI_API_KEY)
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-lite",
         google_api_key=api_key,
         temperature=0.4,
     )

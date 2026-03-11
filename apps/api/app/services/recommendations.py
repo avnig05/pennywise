@@ -44,7 +44,7 @@ Respond with ONLY a JSON array of exactly {top_n} article IDs in order of recomm
 def _create_llm(temperature: float = 0.2) -> ChatGoogleGenerativeAI:
     api_key = require_env("GEMINI_API_KEY", GEMINI_API_KEY)
     return ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-2.5-flash-lite",
         google_api_key=api_key,
         temperature=temperature,
     )
