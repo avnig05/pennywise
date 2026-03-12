@@ -17,20 +17,7 @@ The goal is to feel in control of your money — not overwhelmed by it.
 
 ### Website / app preview
 
-- **Marketing site hero section**
-  - *(Add screenshot here – for example a hero image of the landing page)*
-
-- **Dashboard**
-  - *(Add screenshot here – main dashboard showing summary cards, income/expense breakdown, and recommendations)*
-
-- **Onboarding flow**
-  - *(Add screenshot here – multi-step questionnaire capturing job type, income, rent, debt, goals, etc.)*
-
-You can embed images like this once you have them exported:
-
-```md
-![Pennywise dashboard](./docs/images/dashboard.png)
-```
+  - ![Pennywise landing page](./docs/images/landing_page.png)
 
 ---
 
